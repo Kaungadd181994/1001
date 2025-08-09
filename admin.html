@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini CMS - Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+  <style>
+    body{padding:20px}
+    .topbar{display:flex;justify-content:space-between;align-items:center}
+    .quill-editor{height:320px}
+    table td, table th{vertical-align:middle}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar mb-3">
+      <h3>Mini CMS — Admin</h3>
+      <div>
+        <button id="btnCreate" class="btn btn-primary">Create Post</button>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5>Posts</h5>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover" id="postsTable">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Create</th>
+                <th>Update</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="editorModal" tabindex="-1" aria-labelledby="editorTitle" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editorTitle">Create Post</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-2 mb-2">
+              <div class="col-md-3"><input id="fieldCategory" class="form-control" placeholder="Category" /></div>
+              <div class="col-md-5"><input id="fieldTitle" class="form-control" placeholder="Title" /></div>
+              <div class="col-md-4"><input id="fieldAuthor" class="form-control" placeholder="Author name" /></div>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label">Editor (content)</label>
+              <div id="toolbar">
+                <select class="ql-header">
+                  <option value="1"></option>
+                  <option value="2"></option>
+                  <option selected></option>
+                </select>
+                <button class="ql-bold"></button>
+                <button class="ql-italic"></button>
+                <button class="ql-underline"></button>
+                <button class="ql-list" value="ordered"></button>
+                <button class="ql-list" value="bullet"></button>
+                <button class="ql-align" value="center"></button>
+                <button class="ql-align" value="right"></button>
+                <button class="ql-link"></button>
+                <button class="ql-insertButton">Btn</button>
+                <select class="ql-font"></select>
+                <select class="ql-color"></select>
+              </div>
+              <div id="editor" class="quill-editor"></div>
+            </div>
+
+            <div class="mb-3">
+              <label>Post slug (auto from title if blank)</label>
+              <input id="fieldSlug" class="form-control" placeholder="my-post-slug" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="btnSave" class="btn btn-success">Save</button>
+            <button id="btnUpdate" class="btn btn-primary" style="display:none">Update</button>
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+  <script>
+    // Slug helper
+    function slugify(text){
+      return text.toString().toLowerCase()
+        .replace(/\s+/g,'-')
+        .replace(/[^\w\-]+/g,'')
+        .replace(/\-\-+/g,'-')
+        .replace(/^-+/, '').replace(/-+$/, '');
+    }
+
+    // Initialize Quill editor
+    const quill = new Quill('#editor', { modules: { toolbar: '#toolbar' }, theme: 'snow' });
+
+    document.querySelector('.ql-insertButton').addEventListener('click', () => {
+      const text = prompt('Button text (e.g. Read more)');
+      const url = prompt('Button URL (absolute or relative)');
+      if(text){
+        const html = `<a class="btn btn-sm btn-outline-primary" href="${url||'#'}">${text}</a>`;
+        const range = quill.getSelection(true);
+        quill.clipboard.dangerouslyPasteHTML(range ? range.index : 0, html);
+      }
+    });
+
+    // Modal instance
+    const editorModalEl = document.getElementById('editorModal');
+    const editorModal = new bootstrap.Modal(editorModalEl);
+
+    // Token & repo info - CHANGE THESE to your real info
+    const GITHUB_TOKEN = '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';
+    const OWNER = 'Kaungadd181994';  // <- Replace this
+    const REPO = '1001';   // <- Replace this
+    const BRANCH = 'main';
+
+    let editingFile = null;
+    let postsList = [];
+    let postsListSha = null;
+
+    // GitHub API helpers
+    async function ghRequest(path, method='GET', body=null, headers={}){
+      headers = {
+        'Authorization': 'token ' + GITHUB_TOKEN,
+        'Accept': 'application/vnd.github+json',
+        ...headers
+      };
+      const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
+      const options = {method, headers};
+      if(body) options.body = JSON.stringify(body);
+      const res = await fetch(url, options);
+      if(!res.ok){
+        const text = await res.text();
+        throw new Error(`${res.status} ${res.statusText}: ${text}`);
+      }
+      return await res.json();
+    }
+
+    async function ghGetFile(path){
+      try {
+        return await ghRequest(path);
+      } catch(e) {
+        if(e.message.includes('404')) return null;
+        throw e;
+      }
+    }
+
+    async function ghPutFile(path, message, contentText, sha=null){
+      const payload = {
+        message,
+        branch: BRANCH,
+        content: btoa(unescape(encodeURIComponent(contentText))),
+      };
+      if(sha) payload.sha = sha;
+      return await ghRequest(path, 'PUT', payload);
+    }
+
+    // Load or create posts list.json
+    async function loadPostsList(){
+      const file = await ghGetFile('posts/list.json');
+      if(file){
+        postsListSha = file.sha;
+        postsList = JSON.parse(atob(file.content));
+      } else {
+        postsListSha = null;
+        postsList = [];
+      }
+    }
+
+    async function savePostsList(){
+      const jsonText = JSON.stringify(postsList, null, 2);
+      const res = await ghPutFile('posts/list.json', 'Update posts list.json', jsonText, postsListSha);
+      postsListSha = res.content.sha;
+    }
+
+    // Parse meta comment from HTML
+    function parseMeta(html){
+      const m = html.match(/<!--meta:\s*([\s\S]*?)\s*-->/);
+      if(!m) return {};
+      try { return JSON.parse(m[1]); } catch { return {}; }
+    }
+
+    // Build HTML for post page
+    function buildHtml(meta, bodyHtml){
+      return `<!--meta: ${JSON.stringify(meta)} -->\n<!doctype html>\n<html><head><meta charset="utf-8">\n<title>${meta.title}</title>\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">\n</head><body><div class="container" style="padding:30px">\n  <h1>${meta.title}</h1>\n  <p><small>By ${meta.author || ''} • ${meta.created_at || ''}</small></p>\n  <hr/>\n  <div>${bodyHtml}</div>\n</div></body></html>`;
+    }
+
+    async function loadPost(path){
+      const file = await ghGetFile(path);
+      if(!file) return null;
+      return {content: atob(file.content), sha: file.sha};
+    }
+
+    // Refresh posts table UI
+    async function refreshPostsTable(){
+      await loadPostsList();
+      const tbody = document.querySelector('#postsTable tbody');
+      tbody.innerHTML = '';
+      postsList.forEach(post => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${post.category}</td>
+          <td>${post.title}</td>
+          <td>${post.author}</td>
+          <td>${post.created_at || ''}</td>
+          <td>${post.updated_at || ''}</td>
+          <td>${post.status || 'published'}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary btn-edit">Edit</button>
+            <button class="btn btn-sm btn-outline-secondary btn-lock">${post.status === 'locked' ? 'Unlock' : 'Lock'}</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+        tr.querySelector('.btn-edit').addEventListener('click', async () => {
+          const fileData = await loadPost(post.filename);
+          if(fileData){
+            openEdit(post.filename, fileData.sha, fileData.content);
+          }
+        });
+        tr.querySelector('.btn-lock').addEventListener('click', async () => {
+          await toggleLock(post.filename);
+        });
+      });
+    }
+
+    // Open modal to create new post
+    function openCreate(){
+      editingFile = null;
+      document.getElementById('editorTitle').innerText = 'Create Post';
+      document.getElementById('fieldCategory').value = '';
+      document.getElementById('fieldTitle').value = '';
+      document.getElementById('fieldAuthor').value = '';
+      document.getElementById('fieldSlug').value = '';
+      quill.setContents([]);
+      document.getElementById('btnSave').style.display = 'inline-block';
+      document.getElementById('btnUpdate').style.display = 'none';
+      editorModal.show();
+    }
+
+    // Open modal to edit existing post
+    function openEdit(path, sha, content){
+      editingFile = {path, sha};
+      document.getElementById('editorTitle').innerText = 'Edit Post';
+      const meta = parseMeta(content);
+      document.getElementById('fieldCategory').value = meta.category || '';
+      document.getElementById('fieldTitle').value = meta.title || '';
+      document.getElementById('fieldAuthor').value = meta.author || '';
+      document.getElementById('fieldSlug').value = meta.slug || path.split('/').pop().replace('.html', '');
+      // Extract content inside <body>...</body>
+      const bodyMatch = content.match(/<body[^>]*>((.|[\n\r])*)<\/body>/im);
+      const bodyHtml = bodyMatch ? bodyMatch[1] : content;
+      quill.clipboard.dangerouslyPasteHTML(bodyHtml);
+      document.getElementById('btnSave').style.display = 'none';
+      document.getElementById('btnUpdate').style.display = 'inline-block';
+      editorModal.show();
+    }
+
+    // Save new post
+    document.getElementById('btnSave').addEventListener('click', async () => {
+      try {
+        const category = document.getElementById('fieldCategory').value.trim();
+        const title = document.getElementById('fieldTitle').value.trim();
+        const author = document.getElementById('fieldAuthor').value.trim();
+        let slug = document.getElementById('fieldSlug').value.trim();
+        if (!slug) slug = slugify(title);
+        const contentHtml = quill.root.innerHTML;
+        const now = new Date().toISOString();
+        const meta = {category, title, author, slug, created_at: now, updated_at: now, status: 'published'};
+        const html = buildHtml(meta, contentHtml);
+        const path = `posts/${slug}.html`;
+
+        // Save post file
+        await ghPutFile(path, `Create post: ${title}`, html);
+
+        // Update posts list.json
+        await loadPostsList();
+        postsList.push({category, title, author, created_at: now, updated_at: now, status: 'published', filename: path});
+        await savePostsList();
+
+        editorModal.hide();
+        await refreshPostsTable();
+        alert('Post created');
+      } catch (e) {
+        alert('Save error: ' + e.message);
+        console.error(e);
+      }
+    });
+
+    // Update existing post
+    document.getElementById('btnUpdate').addEventListener('click', async () => {
+      try {
+        if (!editingFile) return;
+        const category = document.getElementById('fieldCategory').value.trim();
+        const title = document.getElementById('fieldTitle').value.trim();
+        const author = document.getElementById('fieldAuthor').value.trim();
+        let slug = document.getElementById('fieldSlug').value.trim();
+        if (!slug) slug = slugify(title);
+        const contentHtml = quill.root.innerHTML;
+        const now = new Date().toISOString();
+
+        const oldPost = postsList.find(p => p.filename === editingFile.path);
+        const createdAt = oldPost ? oldPost.created_at : now;
+        const status = oldPost ? oldPost.status : 'published';
+
+        const meta = {category, title, author, slug, created_at: createdAt, updated_at: now, status};
+        const html = buildHtml(meta, contentHtml);
+        const newPath = `posts/${slug}.html`;
+
+        await ghPutFile(newPath, `Update post: ${title}`, html, editingFile.sha);
+
+        // If slug changed, update postsList accordingly
+        if(newPath !== editingFile.path){
+          postsList = postsList.filter(p => p.filename !== editingFile.path);
+          postsList.push({category, title, author, created_at: createdAt, updated_at: now, status, filename: newPath});
+        } else {
+          const idx = postsList.findIndex(p => p.filename === editingFile.path);
+          if(idx !== -1){
+            postsList[idx] = {category, title, author, created_at: createdAt, updated_at: now, status, filename: newPath};
+          }
+        }
+
+        await savePostsList();
+        editingFile = {path: newPath};
+        editorModal.hide();
+        await refreshPostsTable();
+        alert('Post updated');
+      } catch (e) {
+        alert('Update error: ' + e.message);
+        console.error(e);
+      }
+    });
+
+    // Lock/unlock post
+    async function toggleLock(path){
+      try {
+        const file = await loadPost(path);
+        if(!file) return;
+        const meta = parseMeta(file.content);
+        meta.status = (meta.status === 'locked') ? 'published' : 'locked';
+        meta.updated_at = new Date().toISOString();
+
+        // Extract body content
+        const bodyMatch = file.content.match(/<body[^>]*>((.|[\n\r])*)<\/body>/im);
+        const bodyHtml = bodyMatch ? bodyMatch[1] : file.content;
+
+        const html = buildHtml(meta, bodyHtml);
+
+        await ghPutFile(path, `${meta.status === 'locked' ? 'Lock' : 'Unlock'} post: ${meta.title}`, html, file.sha);
+
+        const idx = postsList.findIndex(p => p.filename === path);
+        if(idx !== -1){
+          postsList[idx].status = meta.status;
+          postsList[idx].updated_at = meta.updated_at;
+          await savePostsList();
+        }
+        await refreshPostsTable();
+      } catch (e) {
+        alert('Toggle lock error: ' + e.message);
+        console.error(e);
+      }
+    }
+
+    // Initial load
+    document.getElementById('btnCreate').addEventListener('click', openCreate);
+    (async () => {
+      await loadPostsList();
+      await refreshPostsTable();
+    })();
+  </script>
+</body>
+</html>
