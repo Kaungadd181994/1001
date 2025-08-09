@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Post</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container py-4" id="root">Loading...</div>
+  <script>
+    // If you like, use JS to fetch the slug from querystring and show the post if you prefer rendering same template for every post.
+    (async ()=>{
+      const qs = new URLSearchParams(location.search);
+      const slug = qs.get('slug');
+      if(!slug){document.getElementById('root').innerHTML = '<div class="alert alert-info">No slug provided.</div>'; return;}
+      const res = await fetch(`/posts/${slug}.html`);
+      if(!res.ok){document.getElementById('root').innerHTML = '<div class="alert alert-danger">Post not found</div>'; return;}
+      const html = await res.text();
+      document.getElementById('root').innerHTML = html;
+    })();
+  </script>
+</body>
+</html>
