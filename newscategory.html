@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent & Merchant Finder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color:green; #007bff;
+            --background-color: #f0f2f5;
+            --card-background: #ffffff;
+            --border-color: #e0e0e0;
+            --text-color: #333;
+            --secondary-text: #888;
+            --active-pill-bg: #444;
+            --active-pill-text: #fff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .primary-toggles {
+            display: flex;
+            justify-content: space-around;
+            background-color: var(--card-background);
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .primary-toggles button {
+            flex: 1;
+            padding: 10px 0;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--secondary-text);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .primary-toggles button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .secondary-filters {
+            display: flex;
+            overflow-x: auto;
+            gap: 5px;
+            min-height: 30px;
+            padding: 10px ;
+            margin-bottom: 10px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .secondary-filters::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .filter-pill {
+            padding: 6px 13px;
+            height: 16px;
+            border-radius: 20px;
+            background-color: softgray;var(--card-background);
+            border: 1px solid var(--border-color);
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .filter-pill.active {
+            background-color: var(--active-pill-bg);
+            color: var(--active-pill-text);
+            border-color: var(--active-pill-bg);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5px 10px 5px;
+            font-size: 16px;
+            font-weight: 450;
+        }
+
+        .results-header .options a {
+            margin-left: 15px;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .results-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-bottom: 60px; /* Space for the bottom nav */
+        }
+
+        .result-card {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background-color: var(--card-background);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .result-card:active {
+            transform: scale(0.98);
+        }
+
+        .card-logo {
+            width: 50px;
+            height: 50px;
+            background-color: var(--border-color);
+            border-radius: 8px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+
+        .card-content {
+            flex-grow: 1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .shop-name {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .distance {
+            color: var(--primary-color);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .card-meta {
+            font-size: 13px;
+            color: var(--secondary-text);
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-meta .tag {
+            background-color: #e8f0fe;
+            color: var(--primary-color);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+            font-size: 12px;
+        }
+
+        .star-rating {
+            color: #ffc107;
+            margin-right: 5px;
+        }
+
+        .promotion {
+            font-size: 13px;
+            color: #28a745;
+            margin-top: 5px;
+        }
+
+        .bottom-sheet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-background);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bottom-sheet.visible {
+            transform: translateY(0);
+        }
+
+        .bottom-sheet-content {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .bottom-sheet-handle {
+            width: 40px;
+            height: 5px;
+            background-color: var(--border-color);
+            border-radius: 5px;
+            margin: 10px auto;
+        }
+        
+        .bottom-sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px 0;
+        }
+
+        .bottom-sheet-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .filter-options {
+            padding: 10px 0;
+        }
+
+        .filter-options .option {
+            padding: 12px 0;
+            font-size: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .filter-options .option:last-child {
+            border-bottom: none;
+        }
+
+        .filter-actions {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 20px 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .filter-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .filter-actions .clear-btn {
+            background-color: var(--background-color);
+            color: var(--secondary-text);
+            margin-right: 10px;
+        }
+
+        .filter-actions .apply-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 60px;
+            background-color: var(--card-background);
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .bottom-nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            color: var(--secondary-text);
+            text-decoration: none;
+        }
+
+        .bottom-nav a.active {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <input type="text" class="search-bar" placeholder="Search by name...">
+
+        <div class="primary-toggles">
+            <button data-type="All" class="active">All</button>
+            <button data-type="Agent">Agents</button>
+            <button data-type="Merchant">Merchants</button>
+        </div>
+
+        <div class="secondary-filters">
+            <div class="filter-pill active" data-filter="distance">Distance</div>
+            <div class="filter-pill" data-filter="rating">Rating</div>
+            <div class="filter-pill" data-filter="promo">Promo</div>
+            <div class="filter-pill" data-filter="offer">Offer</div>
+            <div class="filter-pill" data-filter="category">Category</div>
+        </div>
+
+        <div class="results-header">
+            <span id="results-count"></span>
+            <div class="options">
+                <a href="#">Sort</a>
+                <a href="#">Map</a>
+            </div>
+        </div>
+
+        <div class="results-list" id="results-list">
+            </div>
+    </div>
+    
+    <div class="bottom-sheet-overlay"></div>
+    <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <h4 id="filter-sheet-title">Filter by Distance</h4>
+            </div>
+            <div class="filter-options" id="filter-options">
+                </div>
+        </div>
+        <div class="filter-actions">
+            <button class="clear-btn">Clear</button>
+            <button class="apply-btn">Apply Filters</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="#">Home</a>
+        <a href="#">Scan</a>
+        <a href="#">mBanking</a>
+        <a href="#">History</a>
+        <a href="#" class="active">Nearby</a>
+    </div>
+
+    <script>
+        const data = [
+            { "type": "Agent", "name": "Aung Kyaw Agent", "phone": "0912345678", "address": "No. 12, Hledan, Yangon", "promotionTag": "    Cashback 2%", "rating": 4.5, "distanceKm": 1.2, "offerType": "Master Agent", "category": "Financial Services" },
+            { "type": "Agent", "name": "Mya Mya D2D", "phone": "0922233344", "address": "24th Street, Mandalay", "promotionTag": "     New Joiner Bonus", "rating": 4.0, "distanceKm": 3.8, "offerType": "D2D Agent", "category": "Door to Door Service" },
+            { "type": "Agent", "name": "Ko Zaw Agent", "phone": "0998877665", "address": "Anawrahta Road, Yangon", "promotionTag": "Refer & Earn", "rating": 4.7, "distanceKm": 0.8, "offerType": "Agent", "category": "Money Transfer" },
+            { "type": "Agent", "name": "Cherry Agent", "phone": "0945566778", "address": "77th Street, Mandalay", "promotionTag": "     Lucky Draw", "rating": 4.2, "distanceKm": 2.4, "offerType": "Master Agent", "category": "Bill Payment" },
+            { "type": "Agent", "name": "Win Htut D2D", "phone": "0977554433", "address": "Pyay Road, Yangon", "promotionTag": "      0% Fee Transfer", "rating": 4.8, "distanceKm": 1.5, "offerType": "D2D Agent", "category": "Cash Delivery" },
+            { "type": "Agent", "name": "Soe Moe Agent", "phone": "0966544332", "address": "Myittar Road, Nay Pyi Taw", "promotionTag": "Free First Transaction", "rating": 3.9, "distanceKm": 5.1, "offerType": "Agent", "category": "Financial Services" },
+            { "type": "Agent", "name": "Daw Hnin Agent", "phone": "0911998877", "address": "Baho Road, Yangon", "promotionTag": "     Top-up Bonus", "rating": 4.3, "distanceKm": 2.9, "offerType": "Master Agent", "category": "Top-up Service" },
+            { "type": "Agent", "name": "Moe Sandar D2D", "phone": "0944221133", "address": "80th Street, Mandalay", "promotionTag": "Free Delivery", "rating": 4.6, "distanceKm": 0.9, "offerType": "D2D Agent", "category": "Door to Door Service" },
+            { "type": "Agent", "name": "Zaw Lin Agent", "phone": "0933445566", "address": "Bagaya Street, Yangon", "promotionTag": "Lucky Spin", "rating": 4.1, "distanceKm": 3.3, "offerType": "Agent", "category": "Cash Out Service" },
+            { "type": "Agent", "name": "Khin Khin Agent", "phone": "0999887766", "address": "Myo Ma Street, Nay Pyi Taw", "promotionTag": "5% Cashback", "rating": 4.4, "distanceKm": 4.0, "offerType": "Master Agent", "category": "Financial Services" },
+            { "type": "Merchant", "name": "Golden Store", "phone": "0988776655", "address": "Downtown, Yangon", "promotionTag": "10% Discount", "rating": 4.7, "distanceKm": 1.1, "offerType": "Merchant", "category": "Retail" },
+            { "type": "Merchant", "name": "Shwe Online Shop", "phone": "0911334455", "address": "Online", "promotionTag": "Free Delivery", "rating": 4.5, "distanceKm": 0.0, "offerType": "Online Merchant", "category": "E-commerce" },
+            { "type": "Merchant", "name": "Mya Bakery", "phone": "0955667788", "address": "Sanchaung, Yangon", "promotionTag": "Buy 1 Get 1", "rating": 4.6, "distanceKm": 2.0, "offerType": "Merchant", "category": "Food & Beverage" },
+            { "type": "Merchant", "name": "City Electronics", "phone": "0991234567", "address": "Mandalay Center", "promotionTag": "20% Off", "rating": 4.2, "distanceKm": 3.6, "offerType": "Merchant", "category": "Electronics" },
+            { "type": "Merchant", "name": "Online Fashion", "phone": "0923344556", "address": "Online", "promotionTag": "Flash Sale", "rating": 4.1, "distanceKm": 0.0, "offerType": "Online Merchant", "category": "Clothing & Fashion" },
+            { "type": "Merchant", "name": "Aye Aye Mini Mart", "phone": "0977886655", "address": "Lanmadaw, Yangon", "promotionTag": "Weekend Deal", "rating": 4.3, "distanceKm": 1.7, "offerType": "Merchant", "category": "Grocery" },
+            { "type": "Merchant", "name": "Shwe E-commerce", "phone": "0944778899", "address": "Online", "promotionTag": "Member Points", "rating": 4.8, "distanceKm": 0.0, "offerType": "Online Merchant", "category": "Marketplace" },
+            { "type": "Merchant", "name": "City Bookstore", "phone": "0955664433", "address": "Mingalar Taungnyunt, Yangon", "promotionTag": "Free Bookmark", "rating": 4.0, "distanceKm": 2.8, "offerType": "Merchant", "category": "Books & Stationery" },
+            { "type": "Merchant", "name": "Happy Cafe", "phone": "0998877443", "address": "Mandalay Hill Road", "promotionTag": "Free Coffee Refill", "rating": 4.4, "distanceKm": 1.9, "offerType": "Merchant", "category": "Food & Beverage" },
+            { "type": "Merchant", "name": "Digital Hub", "phone": "0988112233", "address": "Downtown, Nay Pyi Taw", "promotionTag": "Bundle Offer", "rating": 4.5, "distanceKm": 3.5, "offerType": "Merchant", "category": "Electronics" }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const resultsList = document.getElementById('results-list');
+            const resultsCount = document.getElementById('results-count');
+            const primaryToggles = document.querySelectorAll('.primary-toggles button');
+            const filterPills = document.querySelectorAll('.filter-pill');
+            const bottomSheet = document.querySelector('.bottom-sheet');
+            const overlay = document.querySelector('.bottom-sheet-overlay');
+            const sheetTitle = document.getElementById('filter-sheet-title');
+            const filterOptionsContainer = document.getElementById('filter-options');
+            
+            let currentFilterType = 'All';
+
+            const starRatingHtml = (rating) => {
+                const fullStars = Math.floor(rating);
+                const halfStar = rating % 1 >= 0.5;
+                const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+                let html = '';
+                html += '★'.repeat(fullStars);
+                if (halfStar) html += '½';
+                html += '☆'.repeat(emptyStars);
+                return html;
+            };
+
+            const renderResults = (filteredData) => {
+                resultsList.innerHTML = '';
+                resultsCount.textContent = `${filteredData.length} Results Found`;
+
+                if (filteredData.length === 0) {
+                    resultsList.innerHTML = '<p style="text-align: center; margin-top: 50px; color: #888;">No results found.</p>';
+                }
+
+                filteredData.forEach(item => {
+                    const card = document.createElement('div');
+                    card.classList.add('result-card');
+                    
+                    const promotionHtml = item.promotionTag ? `<div class="promotion">${item.promotionTag}</div>` : '';
+                    const distanceDisplay = item.distanceKm > 0 ? `${item.distanceKm} km` : 'Online';
+                    const ratingDisplay = item.rating ? `<span class="star-rating">${starRatingHtml(item.rating)}</span>` : '';
+
+                    card.innerHTML = `
+                        <div class="card-logo">Logo</div>
+                        <div class="card-content">
+                            <div class="card-header">
+                                <span class="shop-name">${item.name}</span>
+                                <span class="distance">${distanceDisplay}</span>
+                            </div>
+                            <div class="card-meta">
+                                ${ratingDisplay} (${item.rating}) <span class="tag">${item.type}</span>
+                            </div>
+                            ${promotionHtml}
+                        </div>
+                    `;
+                    resultsList.appendChild(card);
+                });
+            };
+
+            const updateList = (type) => {
+                currentFilterType = type;
+                let filteredData = data;
+                if (type !== 'All') {
+                    filteredData = data.filter(item => item.type === type);
+                }
+                renderResults(filteredData);
+            };
+
+            // Event listeners for primary toggles
+            primaryToggles.forEach(button => {
+                button.addEventListener('click', () => {
+                    primaryToggles.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    updateList(button.dataset.type);
+                });
+            });
+
+            // Initial render
+            updateList('All');
+
+            // Show bottom sheet logic
+            filterPills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    const filterType = pill.dataset.filter;
+                    const title = filterType.charAt(0).toUpperCase() + filterType.slice(1);
+                    
+                    // Update active pill state
+                    filterPills.forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    
+                    sheetTitle.textContent = `Filter by ${title}`;
+                    
+                    // Dynamically generate filter options
+                    let optionsHtml = '';
+                    switch (filterType) {
+                        case 'distance':
+                            optionsHtml = `
+                                <div class="option"><label><input type="radio" name="distance" checked> < 1 km</label></div>
+                                <div class="option"><label><input type="radio" name="distance"> 1 - 3 km</label></div>
+                                <div class="option"><label><input type="radio" name="distance"> 3 - 5 km</label></div>
+                            `;
+                            break;
+                        case 'rating':
+                            optionsHtml = `
+                                <div class="option"><label><input type="radio" name="rating" checked> 4.5+ Stars</label></div>
+                                <div class="option"><label><input type="radio" name="rating"> 4.0+ Stars</label></div>
+                                <div class="option"><label><input type="radio" name="rating"> 3.5+ Stars</label></div>
+                            `;
+                            break;
+                        case 'promo':
+                            const promos = [...new Set(data.filter(d => d.promotionTag).map(d => d.promotionTag))];
+                            optionsHtml = promos.map(p => `<div class="option"><label><input type="checkbox" > ${p}</label></div>`).join('');
+                            break;
+                        case 'offer':
+                            const offers = [...new Set(data.filter(d => d.offerType).map(d => d.offerType))];
+                            optionsHtml = offers.map(o => `<div class="option"><label><input type="checkbox">${o}</label></div>`).join('');
+                            break;
+                        case 'category':
+                            const categories = [...new Set(data.filter(d => d.category).map(d => d.category))];
+                            optionsHtml = categories.map(c => `<div class="option"><label><input type="checkbox">${c}</label></div>`).join('');
+                            break;
+                    }
+                    filterOptionsContainer.innerHTML = optionsHtml;
+
+                    // Show sheet
+                    bottomSheet.classList.add('visible');
+                    overlay.style.visibility = 'visible';
+                    overlay.style.opacity = '1';
+                });
+            });
+
+            // Hide bottom sheet when overlay is clicked
+            overlay.addEventListener('click', () => {
+                bottomSheet.classList.remove('visible');
+                overlay.style.opacity = '0';
+                overlay.style.visibility = 'hidden';
+            });
+
+            // Handle apply and clear buttons
+            document.querySelector('.apply-btn').addEventListener('click', () => {
+                // Here you would implement the actual filtering logic based on selected checkboxes/radio buttons
+                // For this prototype, we'll just close the sheet
+                bottomSheet.classList.remove('visible');
+                overlay.style.opacity = '0';
+                overlay.style.visibility = 'hidden';
+                // Add a visual cue for applied filters if needed
+            });
+            
+            document.querySelector('.clear-btn').addEventListener('click', () => {
+                // Clear selected filter options
+                const checkboxes = filterOptionsContainer.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+                checkboxes.forEach(cb => cb.checked = false);
+            });
+            
+            // Basic drag logic for the bottom sheet (desktop/touch)
+            let isDragging = false;
+            let startY;
+            let startHeight;
+            
+            const handleDragStart = (e) => {
+                isDragging = true;
+                startY = e.touches ? e.touches[0].clientY : e.clientY;
+                startHeight = bottomSheet.clientHeight;
+                bottomSheet.style.transition = 'none';
+            };
+
+            const handleDragMove = (e) => {
+                if (!isDragging) return;
+                const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+                const deltaY = currentY - startY;
+                const newHeight = startHeight - deltaY;
+                bottomSheet.style.height = `${Math.min(newHeight, window.innerHeight * 0.9)}px`;
+            };
+
+            const handleDragEnd = () => {
+                if (isDragging) {
+                    isDragging = false;
+                    bottomSheet.style.transition = '';
+                    if (bottomSheet.clientHeight < window.innerHeight * 0.4) {
+                        bottomSheet.classList.remove('visible');
+                        overlay.style.opacity = '0';
+                        overlay.style.visibility = 'hidden';
+                    }
+                    bottomSheet.style.height = '';
+                }
+            };
+
+            bottomSheet.addEventListener('mousedown', handleDragStart);
+            document.addEventListener('mousemove', handleDragMove);
+            document.addEventListener('mouseup', handleDragEnd);
+
+            bottomSheet.addEventListener('touchstart', handleDragStart);
+            document.addEventListener('touchmove', handleDragMove);
+            bottomSheet.addEventListener('touchend', handleDragEnd);
+        });
+    </script>
+</body>
+</html>
