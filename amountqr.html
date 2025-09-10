@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment API Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f0f9f0 0%, #e2f0e2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #059669;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .amount-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .amount-input:focus {
+            outline: none;
+            border-color: #059669;
+        }
+        
+        .purpose-title {
+            margin: 20px 0 12px 0;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .purpose-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .purpose-option {
+            padding: 12px 8px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .purpose-option:hover {
+            background-color: #f0fdf4;
+        }
+        
+        .purpose-option.selected {
+            border-color: #059669;
+            background-color: #f0fdf4;
+            color: #059669;
+        }
+        
+        .others-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .others-input:focus {
+            outline: none;
+            border-color: #059669;
+        }
+        
+        .generate-btn {
+            width: 100%;
+            padding: 14px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        
+        .generate-btn:hover {
+            background: #047857;
+        }
+        
+        .api-request {
+            width: 100%;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            display: none;
+        }
+        
+        .api-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .copy-btn {
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .copy-btn:hover {
+            background: #047857;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #6b7280;
+            font-size: 13px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        @media (max-width: 500px) {
+            .purpose-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    
+.purpose-option {
+    opacity: 0.6; /* dim by default */
+    position: relative;
+}
+
+.purpose-option.selected {
+    border-color: #059669;
+    background-color: #f0fdf4;
+    color: #059669;
+    font-weight: 700;  /* bold */
+    opacity: 1;        /* remove dim */
+}
+
+/* Green check icon */
+.purpose-option.selected::after {
+    content: "✔";
+    color: #059669;
+    font-size: 14px;
+    position: absolute;
+    top: 6px;
+    right: 8px;
+}
+
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h3>Dynamic QR</h3>
+        </div>
+        
+        <div class="content">
+            <div class="input-group">
+                <label for="amount">Amount (MMK)</label>
+                <input type="number" id="amount" class="amount-input" placeholder="Enter amount">
+            </div>
+            
+            <h4 class="purpose-title">Purpose of Transaction</h4>
+            
+            <div class="purpose-options">
+                <div class="purpose-option selected" data-purpose="Grocery">Grocery</div>
+                <div class="purpose-option" data-purpose="Bill Payment">Bill Payment</div>
+                <div class="purpose-option" data-purpose="Education">Education</div>
+                <div class="purpose-option" data-purpose="HealthCare">HealthCare</div>
+                <div class="purpose-option" data-purpose="Entertainment">Entertainment</div>
+                <div class="purpose-option" data-purpose="Others">Others</div>
+            </div>
+            
+            <input type="text" id="othersRemark" class="others-input" placeholder="Enter remark (optional)">
+            
+            <button id="generateBtn" class="generate-btn">Next</button>
+            
+            <div class="api-request" id="apiRequestContainer">
+                <div class="api-title">
+                    <span>API Request Format</span>
+                    <button class="copy-btn" id="copyBtn">Copy</button>
+                </div>
+                <div id="apiRequest"></div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Dy Generator | Demo Only</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const purposeOptions = document.querySelectorAll('.purpose-option');
+            const othersInput = document.getElementById('othersRemark');
+            const amountInput = document.getElementById('amount');
+            const generateBtn = document.getElementById('generateBtn');
+            const apiRequest = document.getElementById('apiRequest');
+            const apiRequestContainer = document.getElementById('apiRequestContainer');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            let selectedPurpose = 'Grocery';
+            
+            // Purpose selection
+            purposeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    purposeOptions.forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                    
+                    selectedPurpose = this.getAttribute('data-purpose');
+                    
+                    if (selectedPurpose === 'Others') {
+                        othersInput.style.display = 'block';
+                    } else {
+                        othersInput.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Generate API request
+            generateBtn.addEventListener('click', function() {
+                const amount = amountInput.value.trim();
+                
+                if (!amount) {
+                    alert('Please enter an amount');
+                    return;
+                }
+                
+                let reason = selectedPurpose;
+                if (selectedPurpose === 'Others') {
+                    const remark = othersInput.value.trim();
+                    if (remark) {
+                        reason = `Others-${remark}`;
+                    }
+                }
+                
+                // Create API request data
+                const shopId = "684fbe90212e6733ee6d6c6";
+                const timestamp = Date.now().toString();
+                
+                const requestData = {
+                    shopId: shopId,
+                    amount: parseFloat(amount).toFixed(2),
+                    timestamp: timestamp,
+                    reason: reason
+                };
+                
+                const formattedRequest = JSON.stringify(requestData, null, 2);
+                
+                // Show API request
+                apiRequest.textContent = formattedRequest;
+                apiRequestContainer.style.display = 'block';
+            });
+            
+            // Copy button functionality
+            copyBtn.addEventListener('click', function() {
+                const textArea = document.createElement('textarea');
+                textArea.value = apiRequest.textContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
