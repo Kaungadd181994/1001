@@ -3,7 +3,11 @@ name: Generate HTML List
 on:
   push:
     branches:
-      - main  # run on pushes to main branch
+      - main
+  workflow_dispatch: # allows manual trigger
+
+permissions:
+  contents: write # allow workflow to push files
 
 jobs:
   build:
@@ -15,10 +19,9 @@ jobs:
 
     - name: Find all HTML files recursively
       run: |
-        # Initialize JSON array
         echo "[" > files.json
         first=true
-        # Find all .html files recursively excluding index.html
+        # Recursively find .html files excluding index.html
         find . -type f -name "*.html" ! -name "index.html" | sed 's|^\./||' | while read file; do
           if [ "$first" = true ]; then
             first=false
@@ -29,25 +32,10 @@ jobs:
         done
         echo "]" >> files.json
 
-    - name: Commit JSON
+    - name: Commit and push JSON
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add files.json
-        git diff --quiet || git commit -m "Update files.json"
+        git commit -m "Update files.json" || echo "No changes to commit"
         git push
-
-Explanation:
-
-find . -type f -name "*.html" ! -name "index.html" → finds all HTML files recursively, excluding index.html.
-
-Strips the leading ./ from file paths using sed.
-
-Generates files.json like this:
-
-
-[
-  "folder1/page1.html",
-  "folder2/page2.html",
-  "page3.html"
-]
