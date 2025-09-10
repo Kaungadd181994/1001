@@ -1,0 +1,39 @@
+name: Generate HTML List
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write  # allow workflow to push files
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Find all HTML files recursively
+      run: |
+        echo "[" > files.json
+        first=true
+        find . -type f -name "*.html" ! -name "index.html" | sed 's|^\./||' | while read file; do
+          if [ "$first" = true ]; then
+            first=false
+          else
+            echo "," >> files.json
+          fi
+          echo "  \"$file\"" >> files.json
+        done
+        echo "]" >> files.json
+
+    - name: Commit and push JSON
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add files.json
+        git commit -m "Update files.json" || echo "No changes to commit"
+        git push
