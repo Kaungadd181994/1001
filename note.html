@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Note Taking App</title>
+  <style>
+    /* Minimalist clean design inspired by GitHub themes */
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #24292e;
+      --border-color: #e1e4e8;
+      --button-bg: #f6f8fa;
+      --button-hover: #dbdee1;
+      --accent-color: #0366d6;
+      --menu-bg: #ffffff;
+      --shadow: rgba(27, 31, 35, 0.04);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    .app-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .add-button {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    .add-button:hover {
+      background-color: #005cc5;
+    }
+
+    .note-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .note-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      background-color: var(--bg-color);
+      box-shadow: 0 1px 3px var(--shadow);
+    }
+
+    .note-title {
+      flex: 1;
+      font-size: 16px;
+    }
+
+    .copy-button {
+      background-color: var(--button-bg);
+      border: 1px solid var(--border-color);
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+
+    .copy-button:hover {
+      background-color: var(--button-hover);
+    }
+
+    .dots-menu {
+      position: relative;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .dots-menu:hover {
+      background-color: var(--button-hover);
+    }
+
+    .menu-dropdown {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background-color: var(--menu-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-shadow: 0 2px 5px var(--shadow);
+      z-index: 10;
+    }
+
+    .menu-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .menu-item:hover {
+      background-color: var(--button-hover);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    .modal-content {
+      background-color: var(--bg-color);
+      padding: 20px;
+      border-radius: 8px;
+      width: 400px;
+      max-width: 90%;
+    }
+
+    .modal-header {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .textarea-field {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      min-height: 100px;
+      box-sizing: border-box;
+    }
+
+    .save-button {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .save-button:hover {
+      background-color: #005cc5;
+    }
+
+    .cancel-button {
+      background-color: var(--button-bg);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+
+    .cancel-button:hover {
+      background-color: var(--button-hover);
+    }
+
+    .error-message {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    // Complete React app in a single HTML file using ESM imports
+    import * as React from 'https://esm.sh/react@18.2.0';
+    import * as ReactDOM from 'https://esm.sh/react-dom@18.2.0';
+
+    // JSDoc types to mimic TypeScript-like structure
+    /** @typedef {{id: number, title: string, content: string}} Note */
+
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVnOrF-maf9LzX5JdoBiwf385_IlAC-rpjO4jCgF_omdcqfG7NyfLKzzpG_OBA9Mfo/exec';
+
+    const App = () => {
+      const [notes, setNotes] = React.useState(/** @type {Note[]} */([]));
+      const [loading, setLoading] = React.useState(true);
+      const [error, setError] = React.useState('');
+      const [openMenuId, setOpenMenuId] = React.useState(/** @type {number|null} */(null));
+      const [modalOpen, setModalOpen] = React.useState(false);
+      const [editingNote, setEditingNote] = React.useState(/** @type {Note|null} */(null));
+      const titleRef = React.useRef(/** @type {HTMLInputElement|null} */(null));
+      const contentRef = React.useRef(/** @type {HTMLTextAreaElement|null} */(null));
+
+      React.useEffect(() => {
+        fetchNotes();
+      }, []);
+
+      const fetchNotes = async () => {
+        try {
+          setLoading(true);
+          const response = await fetch(`${SCRIPT_URL}?action=read`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          if (!response.ok) throw new Error('Failed to fetch notes');
+          const data = await response.json();
+          setNotes(data.notes || []);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handleCopy = (content) => {
+        navigator.clipboard.writeText(content).then(() => {
+          alert('Content copied to clipboard!');
+        }).catch((err) => {
+          console.error('Failed to copy:', err);
+        });
+      };
+
+      const toggleMenu = (id) => {
+        setOpenMenuId(openMenuId === id ? null : id);
+      };
+
+      const handleEdit = (note) => {
+        setEditingNote(note);
+        setModalOpen(true);
+        setOpenMenuId(null);
+      };
+
+      const handleDelete = async (id) => {
+        if (!confirm('Are you sure you want to delete this note?')) return;
+        try {
+          const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete', id }),
+          });
+          if (!response.ok) throw new Error('Failed to delete note');
+          await fetchNotes();
+        } catch (err) {
+          setError(err.message);
+        }
+      };
+
+      const handleSave = async () => {
+        const title = titleRef.current?.value.trim();
+        const content = contentRef.current?.value.trim();
+        if (!title || !content) {
+          alert('Title and content are required');
+          return;
+        }
+        try {
+          const payload = editingNote
+            ? { action: 'update', id: editingNote.id, title, content }
+            : { action: 'create', title, content };
+          const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) throw new Error('Failed to save note');
+          setModalOpen(false);
+          setEditingNote(null);
+          await fetchNotes();
+        } catch (err) {
+          setError(err.message);
+        }
+      };
+
+      React.useEffect(() => {
+        if (modalOpen && titleRef.current) {
+          titleRef.current.value = editingNote?.title || '';
+          contentRef.current.value = editingNote?.content || '';
+        }
+      }, [modalOpen, editingNote]);
+
+      if (loading) return <div>Loading...</div>;
+      if (error) return <div className="error-message">{error}</div>;
+
+      return (
+        <div className="app-container">
+          <h1>Notes</h1>
+          <button className="add-button" onClick={() => setModalOpen(true)}>Add Note</button>
+          <ul className="note-list">
+            {notes.map((note) => (
+              <li key={note.id} className="note-row">
+                <span className="note-title">{note.title}</span>
+                <button className="copy-button" onClick={() => handleCopy(note.content)}>Copy</button>
+                <div className="dots-menu" onClick={() => toggleMenu(note.id)}>
+                  ⋯
+                  {openMenuId === note.id && (
+                    <div className="menu-dropdown">
+                      <div className="menu-item" onClick={() => handleEdit(note)}>Edit</div>
+                      <div className="menu-item" onClick={() => handleDelete(note.id)}>Delete</div>
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+          {modalOpen && (
+            <div className="modal-overlay" onClick={() => setModalOpen(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">{editingNote ? 'Edit Note' : 'Add Note'}</div>
+                <input ref={titleRef} className="input-field" placeholder="Title" />
+                <textarea ref={contentRef} className="textarea-field" placeholder="Content" />
+                <button className="save-button" onClick={handleSave}>Save</button>
+                <button className="cancel-button" onClick={() => setModalOpen(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
