@@ -1,347 +1,467 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Note Taking App</title>
-  <style>
-    /* Minimalist clean design inspired by GitHub themes */
-    :root {
-      --bg-color: #ffffff;
-      --text-color: #24292e;
-      --border-color: #e1e4e8;
-      --button-bg: #f6f8fa;
-      --button-hover: #dbdee1;
-      --accent-color: #0366d6;
-      --menu-bg: #ffffff;
-      --shadow: rgba(27, 31, 35, 0.04);
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 20px;
-      line-height: 1.5;
-    }
-
-    .app-container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-
-    .add-button {
-      background-color: var(--accent-color);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-bottom: 20px;
-    }
-
-    .add-button:hover {
-      background-color: #005cc5;
-    }
-
-    .note-list {
-      list-style: none;
-      padding: 0;
-    }
-
-    .note-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      margin-bottom: 8px;
-      background-color: var(--bg-color);
-      box-shadow: 0 1px 3px var(--shadow);
-    }
-
-    .note-title {
-      flex: 1;
-      font-size: 16px;
-    }
-
-    .copy-button {
-      background-color: var(--button-bg);
-      border: 1px solid var(--border-color);
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-right: 8px;
-    }
-
-    .copy-button:hover {
-      background-color: var(--button-hover);
-    }
-
-    .dots-menu {
-      position: relative;
-      cursor: pointer;
-      padding: 4px 8px;
-    }
-
-    .dots-menu:hover {
-      background-color: var(--button-hover);
-    }
-
-    .menu-dropdown {
-      position: absolute;
-      right: 0;
-      top: 100%;
-      background-color: var(--menu-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      box-shadow: 0 2px 5px var(--shadow);
-      z-index: 10;
-    }
-
-    .menu-item {
-      padding: 8px 16px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .menu-item:hover {
-      background-color: var(--button-hover);
-    }
-
-    /* Modal */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 20;
-    }
-
-    .modal-content {
-      background-color: var(--bg-color);
-      padding: 20px;
-      border-radius: 8px;
-      width: 400px;
-      max-width: 90%;
-    }
-
-    .modal-header {
-      font-size: 18px;
-      margin-bottom: 16px;
-    }
-
-    .input-field {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-
-    .textarea-field {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      min-height: 100px;
-      box-sizing: border-box;
-    }
-
-    .save-button {
-      background-color: var(--accent-color);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .save-button:hover {
-      background-color: #005cc5;
-    }
-
-    .cancel-button {
-      background-color: var(--button-bg);
-      border: 1px solid var(--border-color);
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-left: 8px;
-    }
-
-    .cancel-button:hover {
-      background-color: var(--button-hover);
-    }
-
-    .error-message {
-      color: red;
-      margin-top: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Digital Wallet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .time {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .icons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, #0a7e4a 0%, #0ba75e 100%);
+            border-radius: 20px;
+            padding: 25px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(10, 126, 74, 0.2);
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+        
+        .balance-info {
+            flex: 1;
+        }
+        
+        .balance-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        .qr-container {
+            width: 60px;
+            height: 60px;
+           
+           /* background: rgba(255, 255, 255, 0.2);*/
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+           /* transition: background 0.3s;
+       */ }
+        
+        .qr-container:hover {
+           /* background: rgba(255, 255, 255, 0.3);*/
+        }
+        
+        .qr-icon {
+            font-size: 24px;
+            color: white;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+        
+            gap: 15px;
+        }
+        
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-weight: 15px;
+            border-radius: 12px;
+            padding: 15px 5px;
+            transition: transform 0.2s, background 0.3s;
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .action-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: red;
+        }
+        
+        .send .action-icon {
+            background-color:/* #c2185b;  Dark Pink */
+        }
+        
+        .request .action-icon {
+            background-color: #7b1fa2; /* Violet */
+        }
+        
+        .cash-in .action-icon {
+            background-color: #fbc02d; /* Yellow */
+        }
+        
+        .cash-out .action-icon {
+            background-color: #616161; /* Gray */
+        }
+        
+        .action-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .see-more {
+            font-size: 14px;
+            color: #0a7e4a;
+            font-weight: 600;
+        }
+        
+        .payment-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .payment-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border-radius: 12px;
+            padding: 15px 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        
+        .payment-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .payment-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+        }
+        
+        .internet .payment-icon {
+            background-color: #0a7e4a; /* Green */
+        }
+        
+        .electricity .payment-icon {
+            background-color: #fbc02d; /* Yellow */
+        }
+        
+        .voucher .payment-icon {
+            background-color: #7b1fa2; /* Violet */
+        }
+        
+        .assurance .payment-icon {
+            background-color: #c2185b; /* Dark Pink */
+        }
+        
+        .m-card .payment-icon {
+            background-color: #616161; /* Gray */
+        }
+        
+        .bill .payment-icon {
+            background-color: #0a7e4a; /* Green */
+        }
+        
+        .merchant .payment-icon {
+            background-color: #fbc02d; /* Yellow */
+        }
+        
+        .more .payment-icon {
+            background-color: #7b1fa2; /* Violet */
+        }
+        
+        .payment-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .promo-section {
+            margin-bottom: 25px;
+        }
+        
+        .special-offer {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .offer-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0a7e4a 0%, #0ba75e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+        
+        .offer-content {
+            flex: 1;
+        }
+        
+        .offer-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .offer-desc {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: #888;
+        }
+        
+        .nav-item.active {
+            color: #0a7e4a;
+        }
+        
+        .nav-icon {
+            font-size: 20px;
+        }
+        
+        .nav-label {
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module">
-    // Complete React app in a single HTML file using ESM imports
-    import * as React from 'https://esm.sh/react@18.2.0';
-    import * as ReactDOM from 'https://esm.sh/react-dom@18.2.0';
-
-    // JSDoc types to mimic TypeScript-like structure
-    /** @typedef {{id: number, title: string, content: string}} Note */
-
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVnOrF-maf9LzX5JdoBiwf385_IlAC-rpjO4jCgF_omdcqfG7NyfLKzzpG_OBA9Mfo/exec';
-
-    const App = () => {
-      const [notes, setNotes] = React.useState(/** @type {Note[]} */([]));
-      const [loading, setLoading] = React.useState(true);
-      const [error, setError] = React.useState('');
-      const [openMenuId, setOpenMenuId] = React.useState(/** @type {number|null} */(null));
-      const [modalOpen, setModalOpen] = React.useState(false);
-      const [editingNote, setEditingNote] = React.useState(/** @type {Note|null} */(null));
-      const titleRef = React.useRef(/** @type {HTMLInputElement|null} */(null));
-      const contentRef = React.useRef(/** @type {HTMLTextAreaElement|null} */(null));
-
-      React.useEffect(() => {
-        fetchNotes();
-      }, []);
-
-      const fetchNotes = async () => {
-        try {
-          setLoading(true);
-          const response = await fetch(`${SCRIPT_URL}?action=read`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          });
-          if (!response.ok) throw new Error('Failed to fetch notes');
-          const data = await response.json();
-          setNotes(data.notes || []);
-        } catch (err) {
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      const handleCopy = (content) => {
-        navigator.clipboard.writeText(content).then(() => {
-          alert('Content copied to clipboard!');
-        }).catch((err) => {
-          console.error('Failed to copy:', err);
-        });
-      };
-
-      const toggleMenu = (id) => {
-        setOpenMenuId(openMenuId === id ? null : id);
-      };
-
-      const handleEdit = (note) => {
-        setEditingNote(note);
-        setModalOpen(true);
-        setOpenMenuId(null);
-      };
-
-      const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this note?')) return;
-        try {
-          const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'delete', id }),
-          });
-          if (!response.ok) throw new Error('Failed to delete note');
-          await fetchNotes();
-        } catch (err) {
-          setError(err.message);
-        }
-      };
-
-      const handleSave = async () => {
-        const title = titleRef.current?.value.trim();
-        const content = contentRef.current?.value.trim();
-        if (!title || !content) {
-          alert('Title and content are required');
-          return;
-        }
-        try {
-          const payload = editingNote
-            ? { action: 'update', id: editingNote.id, title, content }
-            : { action: 'create', title, content };
-          const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          if (!response.ok) throw new Error('Failed to save note');
-          setModalOpen(false);
-          setEditingNote(null);
-          await fetchNotes();
-        } catch (err) {
-          setError(err.message);
-        }
-      };
-
-      React.useEffect(() => {
-        if (modalOpen && titleRef.current) {
-          titleRef.current.value = editingNote?.title || '';
-          contentRef.current.value = editingNote?.content || '';
-        }
-      }, [modalOpen, editingNote]);
-
-      if (loading) return <div>Loading...</div>;
-      if (error) return <div className="error-message">{error}</div>;
-
-      return (
-        <div className="app-container">
-          <h1>Notes</h1>
-          <button className="add-button" onClick={() => setModalOpen(true)}>Add Note</button>
-          <ul className="note-list">
-            {notes.map((note) => (
-              <li key={note.id} className="note-row">
-                <span className="note-title">{note.title}</span>
-                <button className="copy-button" onClick={() => handleCopy(note.content)}>Copy</button>
-                <div className="dots-menu" onClick={() => toggleMenu(note.id)}>
-                  ⋯
-                  {openMenuId === note.id && (
-                    <div className="menu-dropdown">
-                      <div className="menu-item" onClick={() => handleEdit(note)}>Edit</div>
-                      <div className="menu-item" onClick={() => handleDelete(note.id)}>Delete</div>
-                    </div>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-          {modalOpen && (
-            <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">{editingNote ? 'Edit Note' : 'Add Note'}</div>
-                <input ref={titleRef} className="input-field" placeholder="Title" />
-                <textarea ref={contentRef} className="textarea-field" placeholder="Content" />
-                <button className="save-button" onClick={handleSave}>Save</button>
-                <button className="cancel-button" onClick={() => setModalOpen(false)}>Cancel</button>
-              </div>
-            </div>
-          )}
+    <div class="header">
+        <div class="time">9:41</div>
+        <div class="icons">
+            <i class="fas fa-signal"></i>
+            <i class="fas fa-wifi"></i>
+            <i class="fas fa-battery-three-quarters"></i>
         </div>
-      );
-    };
-
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
+    </div>
+    
+    <div class="balance-card">
+        <div class="balance-header">
+            <div class="balance-info">
+                <div class="balance-label">Available Balance</div>
+                <div class="balance-amount">$450.54</div>
+            </div>
+            <div class="qr-container">
+                <i class="fas fa-qrcode qr-icon"></i>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <div class="action-btn send">
+                <div class="action-icon">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+                <div class="action-label">Send</div>
+            </div>
+            
+            <div class="action-btn request">
+                <div class="action-icon">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <div class="action-label">Request</div>
+            </div>
+            
+            <div class="action-btn cash-in">
+                <div class="action-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <div class="action-label">Cash In</div>
+            </div>
+            
+            <div class="action-btn cash-out">
+                <div class="action-icon">
+                    <i class="fas fa-minus-circle"></i>
+                </div>
+                <div class="action-label">Cash Out</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section-title">
+        Payment List
+        <span class="see-more">See more</span>
+    </div>
+    
+    <div class="payment-grid">
+        <div class="payment-item internet">
+            <div class="payment-icon">
+                <i class="fas fa-wifi"></i>
+            </div>
+            <div class="payment-label">Internet</div>
+        </div>
+        
+        <div class="payment-item electricity">
+            <div class="payment-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <div class="payment-label">Electricity</div>
+        </div>
+        
+        <div class="payment-item voucher">
+            <div class="payment-icon">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <div class="payment-label">Voucher</div>
+        </div>
+        
+        <div class="payment-item assurance">
+            <div class="payment-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="payment-label">Assurance</div>
+        </div>
+        
+        <div class="payment-item m-card">
+            <div class="payment-icon">
+                <i class="fas fa-credit-card"></i>
+            </div>
+            <div class="payment-label">M Card</div>
+        </div>
+        
+        <div class="payment-item bill">
+            <div class="payment-icon">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <div class="payment-label">Bill</div>
+        </div>
+        
+        <div class="payment-item merchant">
+            <div class="payment-icon">
+                <i class="fas fa-store"></i>
+            </div>
+            <div class="payment-label">Merchant</div>
+        </div>
+        
+        <div class="payment-item more">
+            <div class="payment-icon">
+                <i class="fas fa-ellipsis-h"></i>
+            </div>
+            <div class="payment-label">More</div>
+        </div>
+    </div>
+    
+    <div class="promo-section">
+        <div class="section-title">
+            Promo & Discount
+            <span class="see-more">See more</span>
+        </div>
+        
+        <div class="special-offer">
+            <div class="offer-icon">
+                <i class="fas fa-gift"></i>
+            </div>
+            <div class="offer-content">
+                <div class="offer-title">Special Offer</div>
+                <div class="offer-desc">Get discount for every top up, transfer and payment</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="nav-bar">
+        <div class="nav-item active">
+            <div class="nav-icon"><i class="fas fa-home"></i></div>
+            <div class="nav-label">Home</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon"><i class="fas fa-chart-pie"></i></div>
+            <div class="nav-label">Stats</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon"><i class="fas fa-wallet"></i></div>
+            <div class="nav-label">Wallet</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon"><i class="fas fa-user"></i></div>
+            <div class="nav-label">Profile</div>
+        </div>
+    </div>
 </body>
 </html>
