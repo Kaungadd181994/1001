@@ -1,1 +1,2159 @@
-<html>π÷×§</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoPayment Order Flow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* Base Styles */
+        :root {
+            --primary-color: #3B82F6; /* Paymo-inspired blue */
+            --primary-dark: #2563EB; /* Darker blue for gradients */
+            --success-color: #22C55E; /* Green for success */
+            --info-bg: #EFF6FF; /* Light blue for info */
+            --info-text: #3B82F6;
+            --warning-bg: #FEFCE8;
+            --warning-text: #EAB308;
+            --error-bg: #FEE2E2;
+            --error-text: #EF4444;
+            --border-color: #E5E7EB; /* Light gray */
+            --text-primary: #1F2937; /* Dark gray */
+            --text-secondary: #6B7280; /* Medium gray */
+            --text-light: #9CA3AF; /* Light gray */
+            --bg-light: #F3F4F6; /* Very light gray */
+            --bg-white: #FFFFFF; /* Clean white */
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .material-icons {
+            font-size: 20px;
+            vertical-align: middle;
+        }
+
+        .order-container {
+            width: 100%;
+            max-width: 420px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            background: var(--bg-white);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            padding-top: 100px; /* Space for fixed header */
+        }
+
+        /* Merchant Header */
+        .merchant-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.9); /* Translucent white */
+            backdrop-filter: blur(10px); /* Glassmorphism effect */
+            -webkit-backdrop-filter: blur(10px); /* Safari support */
+            z-index: 100;
+        }
+
+        .merchant-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .merchant-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            object-fit: contain;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .merchant-details h3 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .contact-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Tabs Navigation */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-light);
+            box-shadow: var(--shadow-sm);
+            padding: 8px 16px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .tab-btn:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: var(--primary-color);
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            padding: 20px 16px;
+            flex: 1;
+            flex-direction: column;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .tab-title {
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Payment Method Tab */
+        .payment-categories {
+            margin-bottom: 20px;
+        }
+
+        .category {
+            margin-bottom: 12px;
+        }
+
+        .category-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-white);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all var(--transition-speed) ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .category-btn-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-btn:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(59, 130, 246, 0.05);
+            transform: translateY(-1px);
+        }
+
+        .category-btn.active {
+            border-color: var(--primary-color);
+            background-color: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
+        }
+
+        .payment-options {
+            margin: 10px 0 0 16px;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        .payment-options.active {
+            display: block;
+        }
+
+        .payment-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color var(--transition-speed) ease;
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+        }
+
+        .payment-option:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .payment-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .payment-option .option-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-primary);
+            flex-grow: 1;
+        }
+
+        .payment-option .custom-radio {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-speed) ease;
+            flex-shrink: 0;
+        }
+
+        .payment-option input[type="radio"]:checked + .option-content .custom-radio {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+        }
+
+        .payment-option input[type="radio"]:checked + .option-content .custom-radio::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--bg-white);
+        }
+
+        .payment-option .info-icon {
+            font-size: 18px;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: color var(--transition-speed) ease;
+        }
+
+        .payment-option .info-icon:hover {
+            color: var(--primary-color);
+        }
+
+        /* Account Information Tab */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+
+        /* Payment Method Phone Number */
+        .payment-method-phone {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .payment-method-phone.active {
+            display: block;
+        }
+
+        /* Order Review Tab & Processing Tab (shared styles) */
+        .order-accordion {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .accordion-header {
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background-color: var(--bg-light);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .order-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .order-id {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .order-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .accordion-icon {
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-speed) ease-out;
+            background-color: var(--bg-white);
+        }
+
+        .order-item {
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-price {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .order-summary {
+            padding: 14px 16px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-white);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .summary-row:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .summary-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 12px 0;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+
+        /* Payment Info Section */
+        .payment-info-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .payment-info {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            background-color: var(--bg-light);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .info-row:not(:last-child) {
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .payment-category-chip {
+            background-color: var(--primary-color);
+            color: var(--bg-white);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 500;
+            margin-left: 6px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Merchant Notice */
+        .merchant-notice {
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .merchant-notice.info {
+            background-color: var(--info-bg);
+            border-color: var(--info-text);
+        }
+        .merchant-notice.info .material-icons {
+            color: var(--info-text);
+        }
+        .merchant-notice.info p {
+            color: var(--info-text);
+            margin: 0;
+        }
+
+        .merchant-notice.warning {
+            background-color: var(--warning-bg);
+            border-color: var(--warning-text);
+        }
+        .merchant-notice.warning .material-icons {
+            color: var(--warning-text);
+        }
+        .merchant-notice.warning p {
+            color: var(--warning-text);
+            margin: 0;
+        }
+
+        .merchant-notice.error {
+            background-color: var(--error-bg);
+            border-color: var(--error-text);
+        }
+        .merchant-notice.error .material-icons {
+            color: var(--error-text);
+        }
+        .merchant-notice.error p {
+            color: var(--error-text);
+            margin: 0;
+        }
+
+        /* Buttons */
+        .next-btn, .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background-image: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+            color: var(--bg-white);
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all var(--transition-speed) ease;
+            margin-top: auto;
+            box-shadow: var(--shadow-md);
+        }
+
+        .next-btn:hover, .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .back-btn {
+            padding: 14px;
+            background-color: var(--bg-white);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all var(--transition-speed) ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .back-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .button-group .back-btn {
+            flex: 1;
+        }
+
+        .button-group .next-btn {
+            flex: 2;
+        }
+
+        /* Payment Processing Tab */
+        .processing-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            flex: 1;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .processing-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        .spinner {
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        .processing-header h3 {
+            font-size: 20px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .processing-header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            max-width: 260px;
+        }
+
+        .processing-content {
+            width: 100%;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeIn 0.5s ease-out forwards;
+            animation-delay: 0.5s;
+        }
+
+        /* Payment Status Tab */
+        .status-container {
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: var(--bg-white);
+            background-color: var(--success-color);
+            box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+        }
+
+        .status-container h3 {
+            margin: 0 0 8px;
+            text-align: center;
+            font-size: 22px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .status-message {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        /* Receipt Card */
+        .receipt-card {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+            width: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        .receipt-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .receipt-header h4 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .receipt-row span:last-child {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .receipt-row.total {
+            font-weight: 700;
+            margin-top: 12px;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+
+        .receipt-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 12px 0;
+        }
+
+        /* Receipt Actions */
+        .receipt-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .download-btn, .return-btn {
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all var(--transition-speed) ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .download-btn {
+            background-image: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+            color: var(--bg-white);
+            border: none;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .return-btn {
+            background-color: var(--bg-white);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .return-btn:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Terms and Conditions */
+        .terms-container {
+            text-align: center;
+            margin: 16px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .terms-container a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .terms-container a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        .order-footer {
+            text-align: center;
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            font-size: 11px;
+            color: var(--text-light);
+            background-color: var(--bg-light);
+            margin-top: auto;
+        }
+
+        .payment-channels {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            margin: 10px 0;
+        }
+
+        .payment-channel {
+            height: 22px;
+            object-fit: contain;
+            border-radius: 4px;
+            background: var(--bg-white);
+            padding: 2px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .footer-contact {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .footer-contact-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+        }
+
+        .powered-by {
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--text-primary);
+            margin-top: 6px;
+        }
+
+        /* Animations */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideDown {
+            from { max-height: 0; opacity: 0; }
+            to { max-height: var(--content-height); opacity: 1; }
+        }
+
+        /* Custom Modal / Message Box */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-white);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            max-width: 320px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform var(--transition-speed) ease, opacity var(--transition-speed) ease;
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-content h4 {
+            margin-top: 0;
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .modal-content p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .modal-content button.modal-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 4px;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        .modal-content button.modal-close-btn:hover {
+            background-color: var(--bg-light);
+        }
+
+        .modal-content button.modal-action-btn {
+            background-color: var(--primary-color);
+            color: var(--bg-white);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .modal-content button.modal-action-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* Payment Guide Modal */
+        .payment-guide-modal .modal-content.guide-content {
+            max-width: 90%;
+            width: 90%;
+            height: 80vh;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            position: relative;
+        }
+
+        .guide-header {
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+
+        .guide-header h4 {
+            margin: 0 0 4px 0;
+            font-size: 20px;
+        }
+
+        .guide-image-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            background-color: var(--bg-light);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            min-height: 200px;
+        }
+
+        .guide-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .guide-step-description {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+            text-align: center;
+            padding: 0 8px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            background-color: var(--primary-color);
+            transform: scale(1.2);
+        }
+
+        .guide-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .guide-navigation .modal-action-btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .guide-navigation .modal-action-btn:only-child {
+            max-width: 120px;
+            margin: 0 auto;
+        }
+
+        .step-counter {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Onboarding Splash Screen */
+        .onboarding-modal .modal-content {
+            max-width: 90%;
+            width: 90%;
+            height: 85vh;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            position: relative;
+        }
+
+        .onboarding-header {
+            text-align: center;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+
+        .on-membered-image-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            background-color: var(--bg-light);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            min-height: 200px;
+        }
+
+        .onboarding-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .onboarding-step-description {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+            text-align: center;
+            padding: 0 8px;
+        }
+
+        /* Processing/Status Tab Headers */
+        .processing-status-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 100;
+            text-align: center;
+            display: none;
+        }
+
+        .processing-status-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 480px) {
+            body {
+                padding: 0;
+            }
+
+            .order-container {
+                border-radius: 0;
+                max-width: 100%;
+            }
+
+            .merchant-header, .processing-status-header {
+                max-width: 100%;
+                padding: 12px 16px;
+            }
+
+            .tab-content {
+                padding: 16px;
+            }
+
+            .tab-btn {
+                font-size: 12px;
+                padding: 10px 6px;
+            }
+
+            .tab-title {
+                font-size: 16px;
+                margin-bottom: 16px;
+            }
+
+            .next-btn, .submit-btn, .back-btn, .download-btn, .return-btn {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .status-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 32px;
+                margin-bottom: 16px;
+            }
+
+            .status-container h3 {
+                font-size: 18px;
+            }
+
+            .receipt-card {
+                padding: 12px;
+            }
+
+            .receipt-header h4 {
+                font-size: 14px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 16px;
+            }
+
+            .payment-guide-modal .modal-content.guide-content,
+            .onboarding-modal .modal-content {
+                padding: 12px;
+            }
+
+            .guide-step-description,
+            .onboarding-step-description {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="order-container">
+  <!-- Merchant Header -->
+  <div class="merchant-header" id="main-header">
+    <div class="merchant-info">
+      <img src="https://cdn-icons-png.flaticon.com/512/2785/2785814.png" alt="Merchant Logo" class="merchant-logo">
+      <div class="merchant-details">
+        <h3>MoPayment Partner</h3>
+        <div class="contact-row">
+          <span class="contact-item">
+            <span class="material-icons">phone</span>
+            <span>+959 430272824</span>
+          </span>
+          <span class="contact-item">
+            <span class="material-icons">email</span>
+            <span>partner@mopayment.com</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Processing/Status Tab Header -->
+  <div class="processing-status-header" id="processing-status-header">
+    <h3 id="processing-status-title">Payment Processing</h3>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs" id="main-tabs">
+    <button class="tab-btn active" data-tab="payment-method">
+      <span class="material-icons">payment</span>
+      <span>Payment</span>
+    </button>
+    <button class="tab-btn" data-tab="account-info">
+      <span class="material-icons">contact_mail</span>
+      <span>Account</span>
+    </button>
+    <button class="tab-btn" data-tab="order-review">
+      <span class="material-icons">receipt</span>
+      <span>Review</span>
+    </button>
+    <button class="tab-btn" data-tab="payment-status">
+      <span class="material-icons">check_circle_outline</span>
+      <span>Status</span>
+    </button>
+  </div>
+
+  <!-- Tab 1: Payment Method -->
+  <div id="payment-method" class="tab-content active">
+    <h3 class="tab-title">Select Payment Method</h3>
+    
+    <div class="payment-categories">
+      <div class="category">
+        <button class="category-btn active" data-category="wallets">
+          <div class="category-btn-content">
+            <span class="material-icons">account_balance_wallet</span>
+            <span>Wallets</span>
+          </div>
+        </button>
+        <div class="payment-options wallets active">
+          <label class="payment-option">
+            <input type="radio" name="payment" value="KPay" checked>
+            <div class="option-content">
+                <span class="custom-radio"></span>
+                <span class="material-icons">account_balance_wallet</span>
+                <span>KPay</span>
+            </div>
+            <span class="material-icons info-icon" data-guide-method="KPay">help_outline</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment" value="PayPal">
+            <div class="option-content">
+                <span class="custom-radio"></span>
+                <span class="material-icons">payments</span>
+                <span>PayPal</span>
+            </div>
+            <span class="material-icons info-icon" data-guide-method="PayPal">help_outline</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="category">
+        <button class="category-btn" data-category="cards">
+          <div class="category-btn-content">
+            <span class="material-icons">credit_card</span>
+            <span>Cards</span>
+          </div>
+        </button>
+        <div class="payment-options cards">
+          <label class="payment-option">
+            <input type="radio" name="payment" value="Visa">
+            <div class="option-content">
+                <span class="custom-radio"></span>
+                <span class="material-icons">credit_card</span>
+                <span>Visa</span>
+            </div>
+            <span class="material-icons info-icon" data-guide-method="Visa">help_outline</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment" value="Mastercard">
+            <div class="option-content">
+                <span class="custom-radio"></span>
+                <span class="material-icons">credit_score</span>
+                <span>Mastercard</span>
+            </div>
+            <span class="material-icons info-icon" data-guide-method="Mastercard">help_outline</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="category">
+        <button class="category-btn" data-category="banks">
+          <div class="category-btn-content">
+            <span class="material-icons">account_balance</span>
+            <span>Banks</span>
+          </div>
+        </button>
+        <div class="payment-options banks">
+          <label class="payment-option">
+            <input type="radio" name="payment" value="KBZ Bank">
+            <div class="option-content">
+                <span class="custom-radio"></span>
+                <span class="material-icons">account_balance</span>
+                <span>KBZ Bank</span>
+            </div>
+            <span class="material-icons info-icon" data-guide-method="KBZ Bank">help_outline</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment" value="AYA Bank">
+            <div class="option-content">
+                <span class="custom-radio"></span>
+                <span class="material-icons">account_balance</span>
+                <span>AYA Bank</span>
+            </div>
+            <span class="material-icons info-icon" data-guide-method="AYA Bank">help_outline</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Merchant Notice -->
+    <div class="merchant-notice info">
+      <span class="material-icons">info</span>
+      <p>Please select your preferred payment method to proceed with your order. Click the '?' icon for a step-by-step guide.</p>
+    </div>
+    
+    <button class="next-btn" data-next="account-info">
+      <span>Continue</span>
+      <span class="material-icons">chevron_right</span>
+    </button>
+  </div>
+
+  <!-- Tab 2: Account Information -->
+  <div id="account-info" class="tab-content">
+    <h3 class="tab-title">Account Information</h3>
+    
+    <div class="form-group">
+      <label for="phone">Phone Number</label>
+      <input type="tel" id="phone" placeholder="+959 123456789" value="0943023456">
+    </div>
+    
+    <div class="form-group">
+      <label for="email">Email for Receipt</label>
+      <input type="email" id="email" placeholder="your@email.com" value="kaunghtet.min@mo.com.mm">
+    </div>
+    
+    <!-- Payment Method Phone Number -->
+    <div class="form-group payment-method-phone" id="kpay-phone">
+      <label for="kpay-phone-number">KPay Account Phone Number</label>
+      <input type="tel" id="kpay-phone-number" placeholder="Enter your KPay registered phone">
+    </div>
+    
+    <div class="form-group payment-method-phone" id="kbz-phone">
+      <label for="kbz-phone-number">KBZ Pay Account Phone Number</label>
+      <input type="tel" id="kbz-phone-number" placeholder="Enter your KBZ Pay registered phone">
+    </div>
+    
+    <!-- Merchant Notice -->
+    <div class="merchant-notice warning">
+      <span class="material-icons">warning</span>
+      <p>Ensure your contact details are accurate. A detailed receipt will be sent to this email address.</p>
+    </div>
+    
+    <div class="button-group">
+      <button class="back-btn" data-back="payment-method">
+        <span class="material-icons">chevron_left</span>
+        <span>Back</span>
+      </button>
+      <button class="next-btn" data-next="order-review">
+        <span>Continue</span>
+        <span class="material-icons">chevron_right</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab 3: Order Review -->
+  <div id="order-review" class="tab-content">
+    <h3 class="tab-title">Review Your Order</h3>
+    <div class="order-accordion">
+      <div class="accordion-header" onclick="toggleAccordion('#order-review .accordion-content', '#order-review .accordion-icon')">
+        <div class="order-info">
+          <div class="order-id">ORID528292902939</div>
+          <div class="order-date">12/12/2025 12:45:45</div>
+        </div>
+        <span class="material-icons accordion-icon">expand_more</span>
+      </div>
+      
+      <div class="accordion-content">
+        <div class="order-item">
+          <span>1x iPhone 15 Pro Max (256GB)</span>
+          <span class="item-price">1,500,000 MMK</span>
+        </div>
+        <div class="order-item">
+          <span>2x Apple AirPods Pro</span>
+          <span class="item-price">600,000 MMK</span>
+        </div>
+        <div class="order-item">
+          <span>1x AppleCare+ Protection</span>
+          <span class="item-price">250,000 MMK</span>
+        </div>
+      </div>
+      
+      <div class="order-summary">
+        <div class="summary-row">
+          <span>Amount</span>
+          <span>2,350,000 MMK</span>
+        </div>
+        <div class="summary-row">
+          <span>Fees</span>
+          <span>500 MMK</span>
+        </div>
+        <div class="summary-row">
+          <span>Discount</span>
+          <span>-25,000 MMK</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-total">
+          <span>Total</span>
+          <span>2,325,500 MMK</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Info Section -->
+    <div class="payment-info-section">
+      <div class="section-title">
+        <span class="material-icons">credit_card</span>
+        <span>Payment Information</span>
+        <span class="material-icons info-icon" id="review-payment-guide" style="color: var(--text-light); cursor: pointer;">help_outline</span>
+      </div>
+      
+      <div class="payment-info">
+        <div class="info-row">
+          <span class="material-icons">account_balance_wallet</span>
+          <span id="review-payment-method">KPay</span>
+          <span id="review-payment-category" class="payment-category-chip">Wallets <span class="material-icons" style="font-size: 12px;">help_outline</span></span>
+        </div>
+        <div class="info-row">
+          <span class="material-icons">phone</span>
+          <span id="review-phone">0943023456</span>
+        </div>
+        <div class="info-row">
+          <span class="material-icons">email</span>
+          <span id="review-email">kaunghtet.min@mo.com.mm</span>
+        </div>
+        <div class="info-row" id="review-payment-phone" style="display: none;">
+          <span class="material-icons">smartphone</span>
+          <span id="review-payment-phone-number"></span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Important Payment Notice -->
+    <div class="merchant-notice warning">
+      <span class="material-icons">warning</span>
+      <div>
+        <p><strong>Important Notice:</strong></p>
+        <p>• All payments are non-refundable once processed</p>
+        <p>• Please double-check all details before confirming</p>
+        <p>• Maximum processing time: 15 minutes</p>
+        <p>• Disable VPN services for successful payment</p>
+        <p>• Contact support immediately if issues occur</p>
+      </div>
+    </div>
+    
+    <!-- Terms and Conditions -->
+    <div class="terms-container">
+      <p>By proceeding, you agree to the <a href="#" onclick="showCustomAlert('Terms and Conditions', 'In a real application, this would link to the full Terms and Conditions document.')">Terms and Conditions</a> and <a href="#" onclick="showCustomAlert('Privacy Policy', 'In a real application, this would link to the full Privacy Policy document.')">Privacy Policy</a></p>
+    </div>
+    
+    <button class="submit-btn">
+      <span class="material-icons">check_circle</span>
+      <span>Confirm Payment</span>
+    </button>
+  </div>
+
+  <!-- Tab 4: Payment Processing -->
+  <div id="payment-processing" class="tab-content">
+    <div class="processing-container">
+      <div class="processing-header">
+        <div class="spinner"></div>
+        <h3>Processing Payment...</h3>
+        <p>Please do not close this window. Your transaction is being securely processed.</p>
+      </div>
+
+      <div class="processing-content">
+        <h3 class="tab-title">Order Details</h3>
+        <div class="order-accordion">
+            <div class="accordion-header" onclick="toggleAccordion('#payment-processing .order-accordion .accordion-content', '#payment-processing .order-accordion .accordion-icon')">
+                <div class="order-info">
+                    <div class="order-id">ORID528292902939</div>
+                    <div class="order-date">12/12/2025 12:45:45</div>
+                </div>
+                <span class="material-icons accordion-icon">expand_more</span>
+            </div>
+            <div class="accordion-content">
+                <div class="order-item"><span>1x iPhone 15 Pro Max (256GB)</span><span class="item-price">1,500,000 MMK</span></div>
+                <div class="order-item"><span>2x Apple AirPods Pro</span><span class="item-price">600,000 MMK</span></div>
+                <div class="order-item"><span>1x AppleCare+ Protection</span><span class="item-price">250,000 MMK</span></div>
+            </div>
+            <div class="order-summary">
+                <div class="summary-row"><span>Amount</span><span>2,350,000 MMK</span></div>
+                <div class="summary-row"><span>Fees</span><span>500 MMK</span></div>
+                <div class="summary-row"><span>Discount</span><span>-25,000 MMK</span></div>
+                <div class="summary-divider"></div>
+                <div class="summary-total"><span>Total</span><span>2,325,500 MMK</span></div>
+            </div>
+        </div>
+
+        <div class="payment-info-section">
+            <div class="section-title">
+                <span class="material-icons">credit_card</span>
+                <span>Payment Information</span>
+            </div>
+            <div class="payment-info">
+                <div class="info-row">
+                    <span class="material-icons">account_balance_wallet</span>
+                    <span id="processing-payment-method">KPay</span>
+                    <span id="processing-payment-category" class="payment-category-chip">Wallets</span>
+                </div>
+                <div class="info-row">
+                    <span class="material-icons">phone</span>
+                    <span id="processing-phone">0943023456</span>
+                </div>
+                <div class="info-row">
+                    <span class="material-icons">email</span>
+                    <span id="processing-email">kaunghtet.min@mo.com.mm</span>
+                </div>
+                <div class="info-row" id="processing-payment-phone" style="display: none;">
+                    <span class="material-icons">smartphone</span>
+                    <span id="processing-payment-phone-number"></span>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 5: Payment Status -->
+  <div id="payment-status" class="tab-content">
+    <div class="status-container">
+      <div class="status-icon success">
+        <span class="material-icons">check_circle</span>
+      </div>
+      <h3>Payment Successful</h3>
+      <p class="status-message">Your transaction has been completed successfully.</p>
+      
+      <!-- Receipt Card -->
+      <div class="receipt-card">
+        <div class="receipt-header">
+          <span class="material-icons">receipt</span>
+          <h4>Payment Receipt</h4>
+        </div>
+        
+        <div class="receipt-row">
+          <span>Order ID</span>
+          <span>ORID528292902939</span>
+        </div>
+        <div class="receipt-row">
+          <span>Date & Time</span>
+          <span>12/12/2025 12:45:45</span>
+        </div>
+        
+        <div class="receipt-divider"></div>
+        
+        <div class="receipt-row">
+          <span>Amount</span>
+          <span>2,350,000 MMK</span>
+        </div>
+        <div class="receipt-row">
+          <span>Fees</span>
+          <span>500 MMK</span>
+        </div>
+        <div class="receipt-row">
+          <span>Discount</span>
+          <span>-25,000 MMK</span>
+        </div>
+        
+        <div class="receipt-divider"></div>
+        
+        <div class="receipt-row total">
+          <span>Total Paid</span>
+          <span>2,325,500 MMK</span>
+        </div>
+        
+        <div class="receipt-divider"></div>
+        
+        <div class="receipt-row">
+          <span>Payment Method</span>
+          <span id="receipt-payment-method">KBZ Pay</span>
+          <span id="receipt-payment-category" class="payment-category-chip">Wallets</span>
+        </div>
+        <div class="receipt-row" id="receipt-payment-phone" style="display: none;">
+          <span>Account Phone</span>
+          <span id="receipt-payment-phone-number"></span>
+        </div>
+      </div>
+      
+      <div class="receipt-actions">
+        <button class="download-btn" onclick="showCustomAlert('Download Receipt', 'In a real application, a PDF receipt would be generated and downloaded here.')">
+          <span class="material-icons">download</span>
+          <span>Download Receipt</span>
+        </button>
+        <button class="return-btn" onclick="showCustomAlert('Return to Merchant', 'You will now be redirected back to the merchant website.')">
+          <span class="material-icons">store</span>
+          <span>Return to Merchant</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="order-footer">
+    <div class="payment-channels">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRi2eNS2TMihkyUVYNlcGNppWyrg6L8fJ49ZQ&s" alt="MPU Card" class="payment-channel">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwjIsNXsmbG22WNlqQNxW66mdxWute_jd6sg&s" alt="VISA Mastercard" class="payment-channel">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTZzFDC0Bbj4DJhYry6z4S0pQtUWR2Z8SNFwA&s" alt="MoMoney" class="payment-channel">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0yz7j-fGrH6neCGBaGN4T4fxuDC0ylHnMsA&s" alt="AYA Pay" class="payment-channel">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXKSekjQq5pKDUvP_nnyk-iBHLiSXXGT0kcw&s" alt="WaveMoney" class="payment-channel">
+      <img src="https://ctzpay.com/wp-content/uploads/2024/10/CTZPay-logo.png" alt="Citizen Pay" class="payment-channel">
+      <img src="https://play-lh.googleusercontent.com/cnKJYzzHFAE5ZRepCsGVhv7ZnoDfK8Wu5z6lMefeT-45fTNfUblK_gF3JyW5VZsjFc4" alt="KBZ Pay" class="payment-channel">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRWpsBOmiKKeBwXW4em_3enqgRLXXCqo4O3qw&s" alt="CB Pay" class="payment-channel">
+      <img src="https://play-lh.googleusercontent.com/j1ZiQVB8jFi2sZslkh1vN419gvRIN5VGif6749zljhWldRjmC7_dOF_y1jcuq3rwnQ" alt="UAB Pay" class="payment-channel">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_HdKtolk6Hy43Bng_kbdY9cxZ33ZqiNtTlg&s" alt="A plus" class="payment-channel">
+    </div>
+    
+    <div class="powered-by">POWERED BY <strong>MO PAYMENT</strong></div>
+    
+    <div>Copyright © 2025 Modus Operandi Co., Ltd. All rights reserved.</div>
+    
+    <div class="footer-contact">
+      <span class="footer-contact-item">
+        <span class="material-icons" style="font-size: 14px;">email</span>
+        <span>support@mopayment.com</span>
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Alert Modal -->
+<div class="modal-overlay" id="custom-alert-modal">
+    <div class="modal-content">
+        <button class="modal-close-btn" onclick="hideCustomAlert()">×</button>
+        <h4 id="modal-title"></h4>
+        <p id="modal-message"></p>
+        <button class="modal-action-btn" onclick="hideCustomAlert()">OK</button>
+    </div>
+</div>
+
+<!-- Payment Guide Modal -->
+<div class="modal-overlay payment-guide-modal" id="payment-guide-modal">
+    <div class="modal-content guide-content">
+        <button class="modal-close-btn" onclick="hidePaymentGuide()">×</button>
+        <div class="guide-header">
+            <h4 id="guide-modal-title"></h4>
+        </div>
+        <div class="guide-image-container">
+            <img id="guide-step-image" src="" alt="Payment Guide Step" class="guide-image">
+        </div>
+        <p id="guide-step-text" class="guide-step-description"></p>
+        
+        <div class="step-indicator" id="step-indicator"></div>
+        
+        <div class="guide-navigation">
+            <button class="modal-action-btn" id="guide-prev-btn" onclick="prevGuideStep()">
+                <span class="material-icons">arrow_back</span>
+                <span>Back</span>
+            </button>
+            <span id="step-counter" class="step-counter"></span>
+            <button class="modal-action-btn" id="guide-next-btn" onclick="nextGuideStep()">
+                <span>Next</span>
+                <span class="material-icons">arrow_forward</span>
+            </button>
+            <button class="modal-action-btn" id="guide-done-btn" onclick="hidePaymentGuide()" style="display:none;">
+                <span class="material-icons">check</span>
+                <span>Done</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Onboarding Splash Screen Modal -->
+<div class="modal-overlay onboarding-modal" id="onboarding-modal">
+    <div class="modal-content">
+        <div class="onboarding-header">
+            <h4>Welcome to MoPayment</h4>
+        </div>
+        <div class="onboarding-image-container">
+            <img id="onboarding-image" src="" alt="Onboarding Guide" class="onboarding-image">
+        </div>
+        <p id="onboarding-text" class="onboarding-step-description"></p>
+        
+        <div class="step-indicator" id="onboarding-step-indicator"></div>
+        
+        <div class="guide-navigation">
+            <button class="modal-action-btn" id="onboarding-prev-btn" onclick="prevOnboardingStep()">
+                <span class="material-icons">arrow_back</span>
+                <span>Back</span>
+            </button>
+            <span id="onboarding-step-counter" class="step-counter"></span>
+            <button class="modal-action-btn" id="onboarding-next-btn" onclick="nextOnboardingStep()">
+                <span>Next</span>
+                <span class="material-icons">arrow_forward</span>
+            </button>
+            <button class="modal-action-btn" id="onboarding-done-btn" onclick="hideOnboarding()" style="display:none;">
+                <span class="material-icons">check</span>
+                <span>Get Started</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+  // Utility function to show custom alert modal
+  function showCustomAlert(title, message) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-message').textContent = message;
+    document.getElementById('custom-alert-modal').classList.add('active');
+    
+    // Disable all buttons in the background
+    disableButtons();
+  }
+
+  // Utility function to hide custom alert modal
+  function hideCustomAlert() {
+    document.getElementById('custom-alert-modal').classList.remove('active');
+    
+    // Re-enable all buttons
+    enableButtons();
+  }
+
+  // Utility function to disable buttons
+  function disableButtons() {
+    document.querySelectorAll('.next-btn, .submit-btn, .back-btn, .download-btn, .return-btn').forEach(btn => {
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.7';
+    });
+  }
+
+  // Utility function to enable buttons
+  function enableButtons() {
+    document.querySelectorAll('.next-btn, .submit-btn, .back-btn, .download-btn, .return-btn').forEach(btn => {
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+    });
+  }
+
+  // Payment Guide Content Data
+  const paymentGuides = {
+    KPay: {
+      title: "How to Pay with KPay",
+      steps: [
+        { text: "Step 1: Open the KPay app on your device.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRobMFM5ekI_PijNKB4NUCNbVYNizqZFg7q6g&s" },
+        { text: "Step 2: Ensure you have sufficient balance in your KPay account.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxuSQ6Mexw8LtU_I0W7aeoPwD3omJpZKq28Q&s" },
+        { text: "Step 3: Follow the in-app instructions to complete the payment.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXZOGpf2ALTDhW-k4Y41aGoHwAVZZhAQqBWA&s" }
+      ]
+    },
+    PayPal: {
+      title: "How to Pay with PayPal",
+      steps: [
+        { text: "Step 1: Select PayPal and log in to your account.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRobMFM5ekI_PijNKB4NUCNbVYNizqZFg7q6g&s" },
+        { text: "Step 2: Verify the transaction details and confirm payment.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxuSQ6Mexw8LtU_I0W7aeoPwD3omJpZKq28Q&s" },
+        { text: "Step 3: Return to MoPayment to see the confirmation.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXZOGpf2ALTDhW-k4Y41aGoHwAVZZhAQqBWA&s" }
+      ]
+    },
+    Visa: {
+      title: "How to Pay with Visa",
+      steps: [
+        { text: "Step 1: Enter your Visa card details securely.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRobMFM5ekI_PijNKB4NUCNbVYNizqZFg7q6g&s" },
+        { text: "Step 2: Complete the 3D Secure verification if prompted.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxuSQ6Mexw8LtU_I0W7aeoPwD3omJpZKq28Q&s" },
+        { text: "Step 3: Confirm the payment to complete the transaction.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXZOGpf2ALTDhW-k4Y41aGoHwAVZZhAQqBWA&s" }
+      ]
+    },
+    Mastercard: {
+      title: "How to Pay with Mastercard",
+      steps: [
+        { text: "Step 1: Enter your Mastercard details securely.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRobMFM5ekI_PijNKB4NUCNbVYNizqZFg7q6g&s" },
+        { text: "Step 2: Complete the 3D Secure verification if prompted.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxuSQ6Mexw8LtU_I0W7aeoPwD3omJpZKq28Q&s" },
+        { text: "Step 3: Confirm the payment to complete the transaction.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXZOGpf2ALTDhW-k4Y41aGoHwAVZZhAQqBWA&s" }
+      ]
+    },
+    'KBZ Bank': {
+      title: "How to Pay with KBZ Bank",
+      steps: [
+        { text: "Step 1: Select KBZ Bank and note the merchant's bank details.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRobMFM5ekI_PijNKB4NUCNbVYNizqZFg7q6g&s" },
+        { text: "Step 2: Log in to your KBZ Bank app or online portal.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxuSQ6Mexw8LtU_I0W7aeoPwD3omJpZKq28Q&s" },
+        { text: "Step 3: Transfer the amount and save the reference number.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXZOGpf2ALTDhW-k4Y41aGoHwAVZZhAQqBWA&s" }
+      ]
+    },
+    'AYA Bank': {
+      title: "How to Pay with AYA Bank",
+      steps: [
+        { text: "Step 1: Select AYA Bank and note the merchant's bank details.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRobMFM5ekI_PijNKB4NUCNbVYNizqZFg7q6g&s" },
+        { text: "Step 2: Log in to your AYA Bank app or online portal.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxuSQ6Mexw8LtU_I0W7aeoPwD3omJpZKq28Q&s" },
+        { text: "Step 3: Transfer the amount and save the reference number.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXZOGpf2ALTDhW-k4Y41aGoHwAVZZhAQqBWA&s" }
+      ]
+    }
+  };
+
+  let currentGuideStepIndex = 0;
+  let currentGuideMethod = 'KPay';
+
+  // Function to show payment guide modal
+  function showPaymentGuide(method) {
+    currentGuideMethod = method;
+    currentGuideStepIndex = 0;
+    document.getElementById('guide-modal-title').textContent = paymentGuides[method].title;
+    updateGuideContent();
+    document.getElementById('payment-guide-modal').classList.add('active');
+    disableButtons();
+  }
+
+  // Function to hide payment guide modal
+  function hidePaymentGuide() {
+    document.getElementById('payment-guide-modal').classList.remove('active');
+    enableButtons();
+  }
+
+  // Function to update guide content
+  function updateGuideContent() {
+    const guide = paymentGuides[currentGuideMethod];
+    if (!guide) return;
+
+    const stepData = guide.steps[currentGuideStepIndex];
+    document.getElementById('guide-step-image').src = stepData.image;
+    document.getElementById('guide-step-text').textContent = stepData.text;
+    document.getElementById('step-counter').textContent = `${currentGuideStepIndex + 1}/${guide.steps.length}`;
+
+    const indicatorContainer = document.getElementById('step-indicator');
+    indicatorContainer.innerHTML = '';
+    
+    for (let i = 0; i < guide.steps.length; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'step-dot';
+      if (i === currentGuideStepIndex) {
+        dot.classList.add('active');
+      }
+      dot.addEventListener('click', () => {
+        currentGuideStepIndex = i;
+        updateGuideContent();
+      });
+      indicatorContainer.appendChild(dot);
+    }
+
+    const prevBtn = document.getElementById('guide-prev-btn');
+    const nextBtn = document.getElementById('guide-next-btn');
+    const doneBtn = document.getElementById('guide-done-btn');
+
+    prevBtn.style.display = currentGuideStepIndex === 0 ? 'none' : 'flex';
+    nextBtn.style.display = currentGuideStepIndex === guide.steps.length - 1 ? 'none' : 'flex';
+    doneBtn.style.display = currentGuideStepIndex === guide.steps.length - 1 ? 'flex' : 'none';
+  }
+
+  // Onboarding Guide Functions
+  let currentOnboardingStepIndex = 0;
+  const onboardingSteps = [
+    {
+      title: "Welcome to MoPayment",
+      text: "Choose from a variety of secure payment methods to complete your transaction.",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRobMFM5ekI_PijNKB4NUCNbVYNizqZFg7q6g&s"
+    },
+    {
+      title: "Select a Payment Method",
+      text: "Browse wallets, cards, or bank transfers and click the '?' icon for a guide.",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxuSQ6Mexw8LtU_I0W7aeoPwD3omJpZKq28Q&s"
+    },
+    {
+      title: "Complete Your Payment",
+      text: "Enter your details, review your order, and confirm to finalize the payment.",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:TXZOGpf2ALTDhW-k4Y41aGoHwAVZZhAQqBWA&s"
+    }
+  ];
+
+  function showOnboarding() {
+    currentOnboardingStepIndex = 0;
+    updateOnboardingContent();
+    document.getElementById('onboarding-modal').classList.add('active');
+    disableButtons();
+  }
+
+  function hideOnboarding() {
+    document.getElementById('onboarding-modal').classList.remove('active');
+    enableButtons();
+  }
+
+  function updateOnboardingContent() {
+    const stepData = onboardingSteps[currentOnboardingStepIndex];
+    document.getElementById('onboarding-image').src = stepData.image;
+    document.getElementById('onboarding-text').textContent = stepData.text;
+    document.getElementById('onboarding-step-counter').textContent = `${currentOnboardingStepIndex + 1}/${onboardingSteps.length}`;
+
+    const indicatorContainer = document.getElementById('onboarding-step-indicator');
+    indicatorContainer.innerHTML = '';
+    
+    for (let i = 0; i < onboardingSteps.length; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'step-dot';
+      if (i === currentOnboardingStepIndex) {
+        dot.classList.add('active');
+      }
+      dot.addEventListener('click', () => {
+        currentOnboardingStepIndex = i;
+        updateOnboardingContent();
+      });
+      indicatorContainer.appendChild(dot);
+    }
+
+    const prevBtn = document.getElementById('onboarding-prev-btn');
+    const nextBtn = document.getElementById('onboarding-next-btn');
+    const doneBtn = document.getElementById('onboarding-done-btn');
+
+    prevBtn.style.display = currentOnboardingStepIndex === 0 ? 'none' : 'flex';
+    nextBtn.style.display = currentOnboardingStepIndex === onboardingSteps.length - 1 ? 'none' : 'flex';
+    doneBtn.style.display = currentOnboardingStepIndex === onboardingSteps.length - 1 ? 'flex' : 'none';
+  }
+
+  function nextOnboardingStep() {
+    if (currentOnboardingStepIndex < onboardingSteps.length - 1) {
+      currentOnboardingStepIndex++;
+      updateOnboardingContent();
+    }
+  }
+
+  
+      // Function to navigate to the previous onboarding step
+  function prevOnboardingStep() {
+    if (currentOnboardingStepIndex > 0) {
+      currentOnboardingStepIndex--;
+      updateOnboardingContent();
+    }
+  }
+
+  // Function to navigate to the next guide step
+  function nextGuideStep() {
+    if (currentGuideStepIndex < paymentGuides[currentGuideMethod].steps.length - 1) {
+      currentGuideStepIndex++;
+      updateGuideContent();
+    }
+  }
+
+  // Function to navigate to the previous guide step
+  function prevGuideStep() {
+    if (currentGuideStepIndex > 0) {
+      currentGuideStepIndex--;
+      updateGuideContent();
+    }
+  }
+
+  // Toggle accordion content
+  function toggleAccordion(contentSelector, iconSelector) {
+    const content = document.querySelector(contentSelector);
+    const icon = document.querySelector(iconSelector);
+    const isOpen = content.style.maxHeight;
+
+    if (isOpen) {
+      content.style.maxHeight = null;
+      icon.style.transform = 'rotate(0deg)';
+    } else {
+      content.style.maxHeight = content.scrollHeight + 'px';
+      icon.style.transform = 'rotate(180deg)';
+    }
+  }
+
+  // Tab navigation
+  const tabs = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const nextButtons = document.querySelectorAll('.next-btn');
+  const backButtons = document.querySelectorAll('.back-btn');
+  const submitButton = document.querySelector('.submit-btn');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetTab = tab.getAttribute('data-tab');
+      switchTab(targetTab);
+    });
+  });
+
+  nextButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const nextTab = button.getAttribute('data-next');
+      switchTab(nextTab);
+    });
+  });
+
+  backButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const prevTab = button.getAttribute('data-back');
+      switchTab(prevTab);
+    });
+  });
+
+  submitButton.addEventListener('click', () => {
+    switchTab('payment-processing');
+    setTimeout(() => {
+      switchTab('payment-status');
+    }, 3000); // Simulate processing delay
+  });
+
+  function switchTab(targetTab) {
+    tabs.forEach(tab => tab.classList.remove('active'));
+    tabContents.forEach(content => content.classList.remove('active'));
+
+    document.querySelector(`.tab-btn[data-tab="${targetTab}"]`).classList.add('active');
+    document.getElementById(targetTab).classList.add('active');
+
+    // Show/hide main header and processing/status header
+    const mainHeader = document.getElementById('main-header');
+    const processingStatusHeader = document.getElementById('processing-status-header');
+    const processingStatusTitle = document.getElementById('processing-status-title');
+
+    if (targetTab === 'payment-processing' || targetTab === 'payment-status') {
+      mainHeader.style.display = 'none';
+      processingStatusHeader.style.display = 'block';
+      processingStatusTitle.textContent = targetTab === 'payment-processing' ? 'Payment Processing' : 'Payment Status';
+    } else {
+      mainHeader.style.display = 'block';
+      processingStatusHeader.style.display = 'none';
+    }
+
+    // Update payment information in review, processing, and status tabs
+    if (targetTab === 'order-review' || targetTab === 'payment-processing' || targetTab === 'payment-status') {
+      updatePaymentInfo();
+    }
+
+    // Scroll to top of container
+    document.querySelector('.order-container').scrollTop = 0;
+  }
+
+  // Payment category toggle
+  const categoryButtons = document.querySelectorAll('.category-btn');
+  const paymentOptions = document.querySelectorAll('.payment-options');
+
+  categoryButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const category = button.getAttribute('data-category');
+
+      categoryButtons.forEach(btn => btn.classList.remove('active'));
+      paymentOptions.forEach(opt => opt.classList.remove('active'));
+
+      button.classList.add('active');
+      document.querySelector(`.payment-options.${category}`).classList.add('active');
+
+      // Dynamically set content height for animation
+      const content = document.querySelector(`.payment-options.${category}`);
+      content.style.setProperty('--content-height', `${content.scrollHeight}px`);
+    });
+  });
+
+  // Payment method selection
+  const paymentInputs = document.querySelectorAll('input[name="payment"]');
+  const paymentMethodPhones = document.querySelectorAll('.payment-method-phone');
+
+  paymentInputs.forEach(input => {
+    input.addEventListener('change', () => {
+      paymentMethodPhones.forEach(phone => phone.classList.remove('active'));
+
+      if (input.value === 'KPay') {
+        document.getElementById('kpay-phone').classList.add('active');
+      } else if (input.value === 'KBZ Bank') {
+        document.getElementById('kbz-phone').classList.add('active');
+      }
+    });
+  });
+
+  // Update payment information
+  function updatePaymentInfo() {
+    const selectedPayment = document.querySelector('input[name="payment"]:checked').value;
+    const phone = document.getElementById('phone').value;
+    const email = document.getElementById('email').value;
+    let paymentPhone = '';
+
+    if (selectedPayment === 'KPay') {
+      paymentPhone = document.getElementById('kpay-phone-number').value;
+    } else if (selectedPayment === 'KBZ Bank') {
+      paymentPhone = document.getElementById('kbz-phone-number').value;
+    }
+
+    // Update review tab
+    document.getElementById('review-payment-method').textContent = selectedPayment;
+    document.getElementById('review-phone').textContent = phone;
+    document.getElementById('review-email').textContent = email;
+    document.getElementById('review-payment-phone').style.display = paymentPhone ? 'flex' : 'none';
+    document.getElementById('review-payment-phone-number').textContent = paymentPhone;
+
+    // Update processing tab
+    document.getElementById('processing-payment-method').textContent = selectedPayment;
+    document.getElementById('processing-phone').textContent = phone;
+    document.getElementById('processing-email').textContent = email;
+    document.getElementById('processing-payment-phone').style.display = paymentPhone ? 'flex' : 'none';
+    document.getElementById('processing-payment-phone-number').textContent = paymentPhone;
+
+    // Update receipt in status tab
+    document.getElementById('receipt-payment-method').textContent = selectedPayment;
+    document.getElementById('receipt-payment-phone').style.display = paymentPhone ? 'flex' : 'none';
+    document.getElementById('receipt-payment-phone-number').textContent = paymentPhone;
+
+    // Update payment category chip
+    const category = document.querySelector('.category-btn.active').textContent.trim();
+    document.getElementById('review-payment-category').textContent = category;
+    document.getElementById('processing-payment-category').textContent = category;
+    document.getElementById('receipt-payment-category').textContent = category;
+  }
+
+  // Add event listeners for guide icons
+  document.querySelectorAll('.info-icon').forEach(icon => {
+    icon.addEventListener('click', () => {
+      const method = icon.getAttribute('data-guide-method');
+      showPaymentGuide(method);
+    });
+  });
+
+  // Add event listener for payment guide in review tab
+  document.getElementById('review-payment-guide').addEventListener('click', () => {
+    const method = document.getElementById('review-payment-method').textContent;
+    showPaymentGuide(method);
+  });
+
+  // Show onboarding modal on page load
+  window.addEventListener('load', () => {
+    showOnboarding();
+  });
+
+  // Initialize default state
+  document.querySelector('.payment-options.wallets').style.setProperty('--content-height', `${document.querySelector('.payment-options.wallets').scrollHeight}px`);
+  updatePaymentInfo();
+</script>
+
+</body>
+</html>
