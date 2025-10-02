@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Travel Ticket Merchant Flow</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .tab { display: none; }
+    .active { display: block; }
+    button { margin: 5px; padding: 10px; }
+  </style>
+</head>
+<body>
+
+<h2>Travel Ticket Merchant Flow</h2>
+
+<!-- Step Tabs -->
+<div id="step1" class="tab">
+  <h3>Step 1: Search Seat</h3>
+  <p>Select seat: <input id="seat" placeholder="12A" /></p>
+  <button onclick="nextStep(2)">Next</button>
+</div>
+
+<div id="step2" class="tab">
+  <h3>Step 2: Passenger Info</h3>
+  <p>Name: <input id="name" placeholder="John Doe" /></p>
+  <p>Email: <input id="email" placeholder="john@example.com" /></p>
+  <button onclick="prevStep(1)">Back</button>
+  <button onclick="nextStep(3)">Next</button>
+</div>
+
+<div id="step3" class="tab">
+  <h3>Step 3: Confirm Order</h3>
+  <p>Review your details and confirm.</p>
+  <button onclick="prevStep(2)">Back</button>
+  <button onclick="completeOrder()">Pay & Confirm</button>
+</div>
+
+<div id="step4" class="tab">
+  <h3>Step 4: Status</h3>
+  <p id="statusText"></p>
+  <button onclick="restart()">Back to Search</button>
+</div>
+
+<script>
+  // Load session or initialize
+  let flow = JSON.parse(sessionStorage.getItem("merchantFlow")) || { currentStep: 1 };
+
+  function saveFlow() {
+    sessionStorage.setItem("merchantFlow", JSON.stringify(flow));
+  }
+
+  function showStep(step) {
+    document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+    document.getElementById("step" + step).classList.add("active");
+    flow.currentStep = step;
+    saveFlow();
+  }
+
+  function nextStep(step) {
+    // Guard: only allow forward in order
+    if (step <= flow.currentStep + 1) {
+      showStep(step);
+    }
+  }
+
+  function prevStep(step) {
+    // Guard: allow going back only before final status
+    if (flow.currentStep < 4) {
+      showStep(step);
+    }
+  }
+
+  function completeOrder() {
+    // Simulate payment success
+    flow.orderId = "ORD123";
+    flow.paymentStatus = "success";
+    showStep(4);
+    document.getElementById("statusText").innerText =
+      "Order " + flow.orderId + " is " + flow.paymentStatus.toUpperCase();
+  }
+
+  function restart() {
+    // Reset session when leaving status
+    sessionStorage.clear();
+    flow = { currentStep: 1 };
+    showStep(1);
+  }
+
+  // On load, validate session
+  window.onload = function() {
+    if (flow.currentStep === 4 && (!flow.orderId || !flow.paymentStatus)) {
+      // Invalid status -> reset
+      restart();
+    } else {
+      showStep(flow.currentStep);
+    }
+  };
+</script>
+
+</body>
+</html>
