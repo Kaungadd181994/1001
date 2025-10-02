@@ -6,15 +6,15 @@
 <title>HTML Viewer</title>
 <style>
     body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         margin: 0;
-        padding: 20px;
+        padding: 12px;
         background: #f8f9fa;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
     }
     
     .container {
@@ -26,34 +26,31 @@
     }
     
     select {
-        padding: 12px 16px;
-        font-size: 16px;
+        padding: 10px 14px;
+        font-size: 15px;
         width: 100%;
         border: 1px solid #e0e0e0;
         border-radius: 8px;
         background-color: white;
-        margin-bottom: 24px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        transition: all 0.2s ease;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
     select:focus {
         outline: none;
         border-color: #4285f4;
-        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
     }
     
     .mobile-mockup {
-        width: 360px;
-        height: 85vh;
-        max-height: 700px;
+        width: 320px;
+        height: 640px; /* 16:9 aspect ratio */
         background: #1a1a1a;
         border-radius: 24px;
-        padding: 8px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        padding: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         position: relative;
         overflow: hidden;
-        border: 2px solid #333;
+        border: 1.5px solid #333;
     }
     
     .mobile-screen {
@@ -70,11 +67,11 @@
         top: 0;
         left: 50%;
         transform: translateX(-50%);
-        width: 140px;
-        height: 18px;
+        width: 120px;
+        height: 16px;
         background: #1a1a1a;
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
         z-index: 10;
     }
     
@@ -93,19 +90,44 @@
         height: 100%;
         color: #666;
         text-align: center;
-        padding: 40px;
+        padding: 30px;
+        font-size: 14px;
     }
     
     .empty-state i {
-        font-size: 48px;
-        margin-bottom: 16px;
+        font-size: 36px;
+        margin-bottom: 12px;
         opacity: 0.5;
     }
     
-    @media (max-width: 500px) {
+    .empty-state h3 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 500;
+    }
+    
+    .empty-state p {
+        margin: 0;
+        font-size: 13px;
+        opacity: 0.7;
+    }
+
+    @media (max-width: 380px) {
         .mobile-mockup {
-            width: 94vw;
-            height: 85vh;
+            width: 300px;
+            height: 600px;
+        }
+    }
+
+    @media (max-height: 700px) {
+        .mobile-mockup {
+            width: 280px;
+            height: 560px;
+        }
+        
+        select {
+            margin-bottom: 12px;
+            padding: 8px 12px;
         }
     }
 </style>
@@ -123,7 +145,7 @@
                 <div id="empty-preview" class="empty-state">
                     <i>📱</i>
                     <h3>No Preview</h3>
-                    <p>Select an HTML file to view it in this mobile mockup</p>
+                    <p>Select an HTML file to view it</p>
                 </div>
             </div>
         </div>
@@ -141,7 +163,6 @@ async function loadFiles() {
         if (!res.ok) throw new Error('files.json not found');
         const files = await res.json();
 
-        // Clear select and populate
         if (files.length === 0) {
             select.innerHTML = '<option value="">No HTML files yet</option>';
             iframe.src = '';
@@ -157,7 +178,6 @@ async function loadFiles() {
             select.appendChild(option);
         });
     } catch (err) {
-        console.warn('files.json not available yet.', err);
         select.innerHTML = '<option value="">No files yet</option>';
         iframe.src = '';
         showEmptyState();
@@ -190,19 +210,18 @@ select.addEventListener('change', (e) => {
     }
 });
 
-// Adjust iframe height based on device
-function adjustFrameHeight() {
-    const mockup = document.querySelector('.mobile-mockup');
+// Adjust for very small screens
+function adjustLayout() {
     const screenHeight = window.innerHeight;
     
-    // Set height to 85% of viewport height, with a max of 700px
-    const newHeight = Math.min(screenHeight * 0.85, 700);
-    mockup.style.height = `${newHeight}px`;
+    if (screenHeight < 700) {
+        document.body.style.padding = '8px';
+        document.querySelector('.mobile-mockup').style.marginTop = '0';
+    }
 }
 
-// Adjust on load and resize
-window.addEventListener('load', adjustFrameHeight);
-window.addEventListener('resize', adjustFrameHeight);
+window.addEventListener('load', adjustLayout);
+window.addEventListener('resize', adjustLayout);
 </script>
 </body>
 </html>
