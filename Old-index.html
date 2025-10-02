@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML Viewer</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { font-size: 24px; margin-bottom: 10px; }
+    select { padding: 6px; font-size: 16px; width: 100%; max-width: 400px; }
+    iframe { width: 100%; height: 80vh; border: 1px solid #ccc; margin-top: 15px; }
+</style>
+</head>
+<body>
+<h1>HTML Viewer</h1>
+
+<label for="fileSelect">Select an HTML file:</label>
+<select id="fileSelect">
+    <option value="">-- Loading files --</option>
+</select>
+
+<iframe id="preview" src=""></iframe>
+
+<script>
+const select = document.getElementById('fileSelect');
+const iframe = document.getElementById('preview');
+
+// Function to load files.json
+async function loadFiles() {
+    try {
+        const res = await fetch('files.json', { cache: "no-store" });
+        if (!res.ok) throw new Error('files.json not found');
+        const files = await res.json();
+
+        // Clear select and populate
+        if (files.length === 0) {
+            select.innerHTML = '<option value="">No HTML files yet</option>';
+            iframe.src = '';
+            return;
+        }
+
+        select.innerHTML = '<option value="">-- Select a file --</option>';
+        files.forEach(file => {
+            const option = document.createElement('option');
+            option.value = file;
+            option.textContent = file;
+            select.appendChild(option);
+        });
+    } catch (err) {
+        console.warn('files.json not available yet.', err);
+        select.innerHTML = '<option value="">No files yet</option>';
+        iframe.src = '';
+    }
+}
+
+// Initial load
+loadFiles();
+
+// Update iframe on selection
+select.addEventListener('change', (e) => {
+    const file = e.target.value;
+    iframe.src = file ? file : '';
+});
+
+// Optional: refresh files.json every 10 seconds
+// Uncomment if you expect frequent updates
+// setInterval(loadFiles, 10000);
+</script>
+
+</body>
+</html>
