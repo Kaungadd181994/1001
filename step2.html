@@ -1,0 +1,232 @@
+[<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Step 2</title>
+  
+  <!-- Google Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      height: 100%;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+    }
+
+    /* Full background container */
+    .app-container {
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 16px;
+    }
+
+    /* Step card */
+    .step-card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 14px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .step-card h3 {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .step-card h3 .material-icons {
+      font-size: 20px;
+      color: #1976f2;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .step-card .mdr {
+      font-weight: bold;
+      font-size: 14px;
+      color: #1976f2; /* highlight MDR % */
+      background: #e7f0fe;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .step-card label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .step-card input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    /* Gradient info card */
+    .info-card {
+      background: linear-gradient(135deg, #0a1435, #1a2b5c);
+      color: #fff;
+      padding: 14px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .info-card h4 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .info-card h4 .material-icons {
+      font-size: 18px;
+      color: #4fc3f7;
+    }
+
+    .info-card ul {
+      list-style: none;
+      padding-left: 10px;
+      margin: 0;
+    }
+
+    .info-card ul li {
+      margin-bottom: 6px;
+      padding-left: 8px;
+      border-left: 3px solid #2196f3;
+      font-size: 14px;
+    }
+
+    /* Note card (separate) */
+    .note-card {
+      background: linear-gradient(135deg, #0a1435, #1a2b5c);
+      color: #fff;
+      padding: 14px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .note-card h4 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .note-card h4 .material-icons {
+      font-size: 18px;
+      color: #ffb74d;
+    }
+
+    .note-card p {
+      margin: 0;
+      font-size: 13px;
+      color: #ddd;
+      line-height: 1.5;
+    }
+
+    /* Button */
+    .btn-continue {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: #1976f2;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+      margin-top: 6px;
+      transition: background 0.3s;
+    }
+
+    .btn-continue:hover {
+      background: #0d5fd1;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Step card -->
+    <div class="step-card">
+      <h3>
+        <span><span class="material-icons">account_balance</span> UAB Bank</span>
+        <span class="mdr">MDR 1.4%</span>
+      </h3>
+      
+      <label for="phone"><span class="material-icons">smartphone</span> UAB Bank Phone Number</label>
+      <input type="text" id="phone" placeholder="Enter phone number" />
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="receipt" />
+        <label for="receipt">Send Receipt to Email</label>
+      </div>
+
+      <!-- Payment Guide card -->
+      <div class="info-card">
+        <h4><span class="material-icons">menu_book</span> Payment Guide</h4>
+        <ul>
+          <li>Login to UAB Online</li>
+          <li>Select Merchant Service</li>
+          <li>Enter details and pay</li>
+        </ul>
+      </div>
+
+      <button class="btn-continue">Continue</button>
+    </div>
+
+    <!-- Note card separate under step card -->
+    <div class="note-card">
+      <h4><span class="material-icons">info</span> Note</h4>
+      <p>
+        Please make sure your account has sufficient balance before continuing.  
+        Contact support if you face any issue.
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>
