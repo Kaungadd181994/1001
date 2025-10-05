@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification Tabs with Icons & Badge</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center">
+
+  <!-- Header & Tabs (Sticky) -->
+  <div class="w-full max-w-md bg-white shadow-md rounded-b-lg sticky top-0 z-50">
+    <h1 class="text-lg font-semibold text-gray-700 text-center py-3 border-b">Notifications</h1>
+
+    <!-- Tab Bar -->
+    <div class="flex justify-around bg-gray-100 p-1 rounded-full m-3">
+      <button onclick="showTab('promotion')" id="tab-promotion"
+        class="tab-btn relative flex items-center justify-center gap-1 flex-1 py-2 px-4 text-sm font-medium rounded-full text-gray-500 hover:bg-green-100">
+        <span class="material-icons text-base">local_offer</span> 
+        Promotion
+        <span id="badge-promotion" class="absolute -top-1 right-4 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">3</span>
+      </button>
+      <button onclick="showTab('transaction')" id="tab-transaction"
+        class="tab-btn relative flex items-center justify-center gap-1 flex-1 py-2 px-4 text-sm font-medium rounded-full text-gray-500 hover:bg-green-100">
+        <span class="material-icons text-base">receipt_long</span> 
+        Transaction
+        <span id="badge-transaction" class="absolute -top-1 right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">5</span>
+      </button>
+      <button onclick="showTab('system')" id="tab-system"
+        class="tab-btn relative flex items-center justify-center gap-1 flex-1 py-2 px-4 text-sm font-medium rounded-full text-gray-500 hover:bg-green-100">
+        <span class="material-icons text-base">system_update</span> 
+        System
+        <span id="badge-system" class="absolute -top-1 right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">1</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="w-full max-w-md mt-2 space-y-3 px-3 pb-6">
+
+    <!-- Promotion -->
+    <div class="tab-content" id="promotion">
+      <div class="bg-green-50 p-3 rounded-lg shadow">
+        <p class="text-sm font-semibold text-green-600">🎁 Cashback Offer</p>
+        <p class="text-gray-600 text-sm">Get 10% cashback on your first mobile top-up today!</p>
+        <p class="text-xs text-gray-400 mt-1">5 Oct 2025, 10:00 AM</p>
+      </div>
+      <div class="bg-green-50 p-3 rounded-lg shadow">
+        <p class="text-sm font-semibold text-green-600">🔥 Special Deal</p>
+        <p class="text-gray-600 text-sm">Earn double points on all bill payments this week.</p>
+        <p class="text-xs text-gray-400 mt-1">3 Oct 2025, 09:30 AM</p>
+      </div>
+      <div class="bg-green-50 p-3 rounded-lg shadow">
+        <p class="text-sm font-semibold text-green-600">🎉 Lucky Draw</p>
+        <p class="text-gray-600 text-sm">Spend over 5000 MMK and enter our lucky draw automatically!</p>
+        <p class="text-xs text-gray-400 mt-1">1 Oct 2025, 08:00 AM</p>
+      </div>
+    </div>
+
+    <!-- Transaction -->
+    <div class="tab-content hidden" id="transaction">
+      <div class="bg-white p-3 rounded-lg shadow">
+        <p class="font-semibold text-gray-700">Mobile Topup</p>
+        <p class="text-sm text-gray-600">You just topup <span class="font-bold">3000 MMK</span> at Sun Oct 05 2025.</p>
+        <p class="text-xs text-gray-400 mt-1">5 Oct 2025, 09:10 AM</p>
+      </div>
+      <div class="bg-white p-3 rounded-lg shadow">
+        <p class="font-semibold text-gray-700">Pay Merchant</p>
+        <p class="text-sm text-gray-600">Paid <span class="font-bold">3000 MMK</span> to SHWE WAL TUN</p>
+        <p class="text-xs text-gray-400 mt-1">30 Sep 2025, 04:25 AM</p>
+      </div>
+      <div class="bg-white p-3 rounded-lg shadow">
+        <p class="font-semibold text-gray-700">Transfer Received</p>
+        <p class="text-sm text-gray-600">You received <span class="font-bold">10000 MMK</span> from Aung Ko Ko.</p>
+        <p class="text-xs text-gray-400 mt-1">28 Sep 2025, 03:50 PM</p>
+      </div>
+    </div>
+
+    <!-- System -->
+    <div class="tab-content hidden" id="system">
+      <div class="bg-white p-3 rounded-lg shadow">
+        <p class="font-semibold text-gray-700">System Update</p>
+        <p class="text-sm text-gray-600">We will perform maintenance on Oct 10, 2025. Service may be temporarily unavailable.</p>
+        <p class="text-xs text-gray-400 mt-1">2 Oct 2025, 11:00 AM</p>
+      </div>
+      <div class="bg-white p-3 rounded-lg shadow">
+        <p class="font-semibold text-gray-700">Security Notice</p>
+        <p class="text-sm text-gray-600">Your account password was updated successfully.</p>
+        <p class="text-xs text-gray-400 mt-1">28 Sep 2025, 06:30 PM</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JS -->
+  <script>
+    function showTab(tab) {
+      // Switch content
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tab).classList.remove('hidden');
+
+      // Update tab style
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-green-500','text-white');
+        btn.classList.add('text-gray-500');
+      });
+      document.getElementById('tab-' + tab).classList.add('bg-green-500','text-white');
+
+      // Clear badge count for opened tab
+      const badge = document.getElementById('badge-' + tab);
+      if (badge) badge.classList.add('hidden');
+    }
+
+    // Default open Transaction
+    showTab('transaction');
+  </script>
+</body>
+</html>
