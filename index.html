@@ -5,11 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HTML Viewer</title>
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -18,7 +14,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        overflow: hidden; /* No scrolling allowed */
+        overflow: hidden;
     }
     
     .header {
@@ -44,7 +40,7 @@
         align-items: center;
         justify-content: center;
         padding: 0 8px 8px 8px;
-        max-height: calc(100vh - 70px); /* Reserve space for header */
+        max-height: calc(100vh - 70px);
     }
     
     .mobile-mockup {
@@ -59,6 +55,7 @@
         position: relative;
         overflow: hidden;
         border: 1.5px solid #333;
+        transition: transform 0.25s ease;
     }
     
     .mobile-screen {
@@ -92,10 +89,11 @@
     }
     
     iframe {
-        width: 375px;
-        height: 667px;
+        width: 100%;
+        height: 100%;
         border: none;
-        transform-origin: 0 0;
+        border-radius: 16px;
+        display: none; /* hidden until loaded */
     }
     
     .empty-state {
@@ -110,34 +108,10 @@
         font-size: 14px;
     }
 
-    /* Scale for different screen sizes */
-    @media (max-height: 750px) {
-        .mobile-mockup {
-            transform: scale(0.9);
-        }
-    }
-
-    @media (max-height: 680px) {
-        .mobile-mockup {
-            transform: scale(0.85);
-        }
-    }
-
-    @media (max-height: 620px) {
-        .mobile-mockup {
-            transform: scale(0.8);
-        }
-    }
-
     @media (max-width: 400px) {
         .mobile-mockup {
-            width: 350px;
-            height: 622px;
-        }
-        
-        iframe {
-            width: 350px;
-            height: 622px;
+            width: 90vw;
+            height: 80vh;
         }
     }
 </style>
@@ -157,8 +131,7 @@
                     <iframe id="preview" src=""></iframe>
                 </div>
                 <div id="empty-preview" class="empty-state">
-                    <i>📱</i>
-                    <h3>No Preview</h3>
+                    <h3>📱 No Preview</h3>
                     <p>Select an HTML file to view it</p>
                 </div>
             </div>
@@ -171,19 +144,12 @@ const iframe = document.getElementById('preview');
 const emptyPreview = document.getElementById('empty-preview');
 const mobileMockup = document.querySelector('.mobile-mockup');
 
-// Function to load files.json
+// Load file list dynamically
 async function loadFiles() {
     try {
         const res = await fetch('files.json', { cache: "no-store" });
         if (!res.ok) throw new Error('files.json not found');
         const files = await res.json();
-
-        if (files.length === 0) {
-            select.innerHTML = '<option value="">No HTML files yet</option>';
-            iframe.src = '';
-            showEmptyState();
-            return;
-        }
 
         select.innerHTML = '<option value="">-- Select HTML file --</option>';
         files.forEach(file => {
@@ -194,12 +160,10 @@ async function loadFiles() {
         });
     } catch (err) {
         select.innerHTML = '<option value="">No files yet</option>';
-        iframe.src = '';
         showEmptyState();
     }
 }
 
-// Show/hide empty state
 function showEmptyState() {
     emptyPreview.style.display = 'flex';
     iframe.style.display = 'none';
@@ -210,68 +174,75 @@ function hideEmptyState() {
     iframe.style.display = 'block';
 }
 
-// Auto-scale mockup to fit screen
+// Responsive scaling for the mockup
 function scaleMockupToFit() {
     const container = document.querySelector('.mockup-container');
     const containerHeight = container.clientHeight;
-    const mockupHeight = 667; // Original mockup height
-    
-    if (containerHeight < mockupHeight) {
-        const scale = containerHeight / mockupHeight;
-        mobileMockup.style.transform = `scale(${scale})`;
-    } else {
-        mobileMockup.style.transform = 'scale(1)';
-    }
+    const mockupHeight = 667;
+
+    const scale = Math.min(1, containerHeight / mockupHeight);
+    mobileMockup.style.transform = `scale(${scale})`;
 }
 
-// Update iframe on selection
-select.addEventListener('change', (e) => {
+// Inject responsive CSS into iframe
+function injectResponsiveCSS(doc) {
+    const style = doc.createElement('style');
+    style.innerHTML = `
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            margin: 0; padding: clamp(8px, 3vw, 20px);
+        }
+        h1, h2, h3, p, span, div {
+            font-size: clamp(12px, 2.3vw, 18px);
+            line-height: 1.5;
+        }
+        img, video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        button, a {
+            font-size: clamp(13px, 2.5vw, 17px);
+            padding: clamp(6px, 2vw, 12px) clamp(12px, 4vw, 20px);
+            border-radius: 8px;
+        }
+        .container, .wrapper {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+    `;
+    doc.head.appendChild(style);
+}
+
+// Change iframe when file selected
+select.addEventListener('change', e => {
     const file = e.target.value;
     if (file) {
         iframe.src = file;
         hideEmptyState();
-        
+
         iframe.onload = function() {
-            // Ensure iframe content fits
             try {
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                const viewportMeta = iframeDoc.querySelector('meta[name="viewport"]');
-                if (!viewportMeta) {
-                    const meta = iframeDoc.createElement('meta');
-                    meta.name = 'viewport';
-                    meta.content = 'width=375, initial-scale=1.0';
-                    iframeDoc.head.appendChild(meta);
-                }
-            } catch (e) {
-                // Cross-origin restriction, can't access iframe document
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                injectResponsiveCSS(doc);
+            } catch (err) {
+                console.warn("Cross-origin, cannot inject CSS:", err);
             }
         };
     } else {
-        iframe.src = '';
         showEmptyState();
+        iframe.src = '';
     }
 });
 
-// Handle window resize
 window.addEventListener('resize', scaleMockupToFit);
 
-// Prevent any scrolling on body
-document.body.addEventListener('wheel', (e) => {
-    if (e.target === document.body) {
-        e.preventDefault();
-    }
-});
+// Disable scroll on body
+document.body.addEventListener('wheel', e => { if (e.target === document.body) e.preventDefault(); });
+document.body.addEventListener('touchmove', e => { if (e.target === document.body) e.preventDefault(); });
 
-document.body.addEventListener('touchmove', (e) => {
-    if (e.target === document.body) {
-        e.preventDefault();
-    }
-});
-
-// Initial load
+// Initialize
 loadFiles();
-
-// Apply initial scaling
 setTimeout(scaleMockupToFit, 100);
 </script>
 </body>
