@@ -3,61 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HTML Viewer</title>
+<title>HTML Viewer - 360x640</title>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: #f8f9fa;
+        background: #f4f4f6;
         height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
         overflow: hidden;
     }
-    
+
     .header {
         width: 100%;
         max-width: 400px;
         padding: 12px 8px 8px 8px;
         flex-shrink: 0;
     }
-    
+
     select {
         padding: 10px 14px;
         font-size: 15px;
         width: 100%;
-        border: 1px solid #e0e0e0;
+        border: 1px solid #ddd;
         border-radius: 8px;
         background-color: white;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    
+
     .mockup-container {
         flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0 8px 8px 8px;
+        padding: 8px;
         max-height: calc(100vh - 70px);
     }
-    
+
     .mobile-mockup {
-        width: 375px;
-        height: 667px;
+        width: 360px;
+        height: 640px;
         max-width: 100%;
         max-height: 100%;
         background: #1a1a1a;
         border-radius: 24px;
         padding: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.15);
         position: relative;
         overflow: hidden;
         border: 1.5px solid #333;
         transition: transform 0.25s ease;
     }
-    
+
     .mobile-screen {
         width: 100%;
         height: 100%;
@@ -66,20 +66,20 @@
         overflow: hidden;
         position: relative;
     }
-    
+
     .mobile-notch {
         position: absolute;
         top: 0;
         left: 50%;
         transform: translateX(-50%);
-        width: 120px;
-        height: 16px;
+        width: 100px;
+        height: 14px;
         background: #1a1a1a;
         border-bottom-left-radius: 8px;
         border-bottom-right-radius: 8px;
         z-index: 10;
     }
-    
+
     .iframe-wrapper {
         width: 100%;
         height: 100%;
@@ -87,15 +87,15 @@
         overflow: hidden;
         border-radius: 16px;
     }
-    
+
     iframe {
         width: 100%;
         height: 100%;
         border: none;
         border-radius: 16px;
-        display: none; /* hidden until loaded */
+        display: none;
     }
-    
+
     .empty-state {
         display: flex;
         flex-direction: column;
@@ -111,7 +111,7 @@
     @media (max-width: 400px) {
         .mobile-mockup {
             width: 90vw;
-            height: 80vh;
+            height: calc(90vw * (640 / 360)); /* maintain ratio */
         }
     }
 </style>
@@ -122,7 +122,7 @@
             <option value="">-- Select HTML file --</option>
         </select>
     </div>
-    
+
     <div class="mockup-container">
         <div class="mobile-mockup">
             <div class="mobile-notch"></div>
@@ -144,7 +144,7 @@ const iframe = document.getElementById('preview');
 const emptyPreview = document.getElementById('empty-preview');
 const mobileMockup = document.querySelector('.mobile-mockup');
 
-// Load file list dynamically
+// Load available HTML files from files.json
 async function loadFiles() {
     try {
         const res = await fetch('files.json', { cache: "no-store" });
@@ -158,29 +158,30 @@ async function loadFiles() {
             option.textContent = file;
             select.appendChild(option);
         });
-    } catch (err) {
-        select.innerHTML = '<option value="">No files yet</option>';
+    } catch {
+        select.innerHTML = '<option value="">No files found</option>';
         showEmptyState();
     }
 }
 
+// Show/Hide states
 function showEmptyState() {
     emptyPreview.style.display = 'flex';
     iframe.style.display = 'none';
 }
-
 function hideEmptyState() {
     emptyPreview.style.display = 'none';
     iframe.style.display = 'block';
 }
 
-// Responsive scaling for the mockup
+// Scale mockup dynamically
 function scaleMockupToFit() {
     const container = document.querySelector('.mockup-container');
-    const containerHeight = container.clientHeight;
-    const mockupHeight = 667;
-
-    const scale = Math.min(1, containerHeight / mockupHeight);
+    const scale = Math.min(
+        container.clientWidth / 360,
+        container.clientHeight / 640,
+        1
+    );
     mobileMockup.style.transform = `scale(${scale})`;
 }
 
@@ -193,7 +194,7 @@ function injectResponsiveCSS(doc) {
             margin: 0; padding: clamp(8px, 3vw, 20px);
         }
         h1, h2, h3, p, span, div {
-            font-size: clamp(12px, 2.3vw, 18px);
+            font-size: clamp(12px, 2.5vw, 18px);
             line-height: 1.5;
         }
         img, video {
@@ -214,13 +215,12 @@ function injectResponsiveCSS(doc) {
     doc.head.appendChild(style);
 }
 
-// Change iframe when file selected
+// When user selects file
 select.addEventListener('change', e => {
     const file = e.target.value;
     if (file) {
         iframe.src = file;
         hideEmptyState();
-
         iframe.onload = function() {
             try {
                 const doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -236,12 +236,9 @@ select.addEventListener('change', e => {
 });
 
 window.addEventListener('resize', scaleMockupToFit);
-
-// Disable scroll on body
 document.body.addEventListener('wheel', e => { if (e.target === document.body) e.preventDefault(); });
 document.body.addEventListener('touchmove', e => { if (e.target === document.body) e.preventDefault(); });
 
-// Initialize
 loadFiles();
 setTimeout(scaleMockupToFit, 100);
 </script>
